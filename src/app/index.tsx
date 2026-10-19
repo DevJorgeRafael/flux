@@ -28,6 +28,7 @@ import {
   Settings,
   RotateCcw,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react-native';
 import { useColors, useThemeMode, useInsets } from '@/components/ui/theme';
 import {
@@ -83,6 +84,15 @@ export default function HomeScreen() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal para crear nueva cuenta
+  const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
+  const [accName, setAccName] = useState('');
+  const [accType, setAccType] = useState<AccountType>('CHECKING');
+  const [accBalance, setAccBalance] = useState('');
+  const [accTNA, setAccTNA] = useState('');
+  const [accTermMonths, setAccTermMonths] = useState('3');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
   const fetchAllData = useCallback(async (filterAccId?: string | null) => {
     const accFilter = filterAccId !== undefined ? filterAccId : selectedFilterAccountId;
@@ -358,6 +368,64 @@ export default function HomeScreen() {
     }
   };
 
+  const handleCreateAccount = async () => {
+    const trimmedName = accName.trim();
+    if (!trimmedName) {
+      Alert.alert('Nombre requerido', 'Por favor ingresa un nombre para la cuenta.');
+      return;
+    }
+
+    const initialBalanceNum = parseFloat(accBalance.replace(',', '.')) || 0;
+    const tnaNum = accTNA ? parseFloat(accTNA.replace(',', '.')) / 100 : undefined;
+    const termMonthsNum = parseInt(accTermMonths, 10) || 3;
+
+    try {
+      setIsCreatingAccount(true);
+
+      if (accType === 'FIXED_TERM') {
+        const principal = initialBalanceNum > 0 ? initialBalanceNum : 1000;
+        await accountRepo.create({
+          name: trimmedName,
+          type: 'FIXED_TERM',
+          initialBalance: 0,
+          currency: 'USD',
+          initialFixedTermDeposit: {
+            principalAmount: principal,
+            annualRate: tnaNum || 0.1,
+            termMonths: termMonthsNum,
+          },
+        });
+      } else if (accType === 'FLEXIBLE_SAVINGS') {
+        await accountRepo.create({
+          name: trimmedName,
+          type: 'FLEXIBLE_SAVINGS',
+          initialBalance: initialBalanceNum,
+          currency: 'USD',
+          annualRate: tnaNum,
+        });
+      } else {
+        await accountRepo.create({
+          name: trimmedName,
+          type: 'CHECKING',
+          initialBalance: initialBalanceNum,
+          currency: 'USD',
+        });
+      }
+
+      setAccName('');
+      setAccBalance('');
+      setAccTNA('');
+      setAccTermMonths('3');
+      setIsAccountModalVisible(false);
+      await fetchAllData(null);
+    } catch (err) {
+      console.error('Error al crear cuenta:', err);
+      Alert.alert('Error', 'No se pudo crear la cuenta.');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
   const getAccountTypeLabel = (type: AccountType) => {
     switch (type) {
       case 'CHECKING':
@@ -559,29 +627,44 @@ export default function HomeScreen() {
 
         {/* Sección Cuentas */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Mis Cuentas</Text>
-          <View style={[styles.counterBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.counterBadgeText, { color: colors.textLight }]}>{accounts.length}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>Mis Cuentas</Text>
+            <View style={[styles.counterBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.counterBadgeText, { color: colors.textLight }]}>{accounts.length}</Text>
+            </View>
           </View>
+
+          {/* Botón Nueva Cuenta en Cabecera */}
+          <TouchableOpacity
+            style={[styles.addAccountHeaderBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => setIsAccountModalVisible(true)}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Plus size={15} color={colors.primaryText} strokeWidth={2.5} />
+            <Text style={[styles.addAccountHeaderText, { color: colors.primaryText }]}>Nueva Cuenta</Text>
+          </TouchableOpacity>
         </View>
 
         {accounts.length === 0 ? (
           <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={{ marginBottom: 12 }}>
-              <CreditCard size={32} color={colors.textLight} strokeWidth={1.5} />
+              <CreditCard size={36} color={colors.textLight} strokeWidth={1.5} />
             </View>
-            <Text style={[styles.emptyHeading, { color: colors.text }]}>Aún no tienes cuentas creadas</Text>
+            <Text style={[styles.emptyHeading, { color: colors.text }]}>Sin cuentas registradas</Text>
             <Text style={[styles.emptySubtext, { color: colors.textLight }]}>
-              Genera datos de prueba para experimentar con cuentas remuneradas y plazos fijos.
+              Crea tu primera cuenta corriente, fondo flexible o plazo fijo para comenzar a gestionar tus finanzas.
             </Text>
-            {isDevMode && (
-              <TouchableOpacity
-                style={[styles.seedActionButton, { backgroundColor: colors.primary }]}
-                onPress={handleSeedDemoData}
-              >
-                <Text style={[styles.seedActionButtonText, { color: colors.onPrimary }]}>Cargar Cuentas Demo</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.createAccountPrimaryBtn, { backgroundColor: colors.primary }]}
+              onPress={() => setIsAccountModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Plus size={18} color={colors.onPrimary} strokeWidth={2.5} />
+              <Text style={[styles.createAccountPrimaryBtnText, { color: colors.onPrimary }]}>
+                Crear mi primera cuenta
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <ScrollView
@@ -732,6 +815,24 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               );
             })}
+
+            {/* Tarjeta para Añadir Otra Cuenta */}
+            <TouchableOpacity
+              style={[
+                styles.addAccountDashedCard,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+              onPress={() => setIsAccountModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.addAccountIconCircle, { backgroundColor: colors.primarySoft }]}>
+                <Plus size={20} color={colors.primaryText} strokeWidth={2.5} />
+              </View>
+              <Text style={[styles.addAccountDashedTitle, { color: colors.text }]}>Nueva Cuenta</Text>
+              <Text style={[styles.addAccountDashedSubtext, { color: colors.textLight }]}>
+                Añadir otra
+              </Text>
+            </TouchableOpacity>
           </ScrollView>
         )}
 
@@ -1016,6 +1117,183 @@ export default function HomeScreen() {
                 <Text style={styles.submitTransactionButtonText}>Guardar Movimiento</Text>
               )}
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para Crear Cuenta */}
+      <Modal
+        visible={isAccountModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsAccountModalVisible(false)}
+      >
+        <View style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' }]}>
+            <View style={styles.modalTopBar}>
+              <Text style={[styles.modalHeading, { color: colors.text }]}>Nueva Cuenta</Text>
+              <TouchableOpacity onPress={() => setIsAccountModalVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <X size={22} color={colors.textLight} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
+              {/* Selector de Tipo de Cuenta */}
+              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>Tipo de Cuenta</Text>
+              <View style={styles.accountTypeSelectorRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeCardOption,
+                    {
+                      backgroundColor: accType === 'CHECKING' ? colors.primarySoft : colors.background,
+                      borderColor: accType === 'CHECKING' ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setAccType('CHECKING')}
+                  activeOpacity={0.7}
+                >
+                  <CreditCard size={18} color={accType === 'CHECKING' ? colors.primaryText : colors.textLight} />
+                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'CHECKING' ? colors.primaryText : colors.text }]}>
+                    Corriente
+                  </Text>
+                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Operaciones</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeCardOption,
+                    {
+                      backgroundColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primarySoft : colors.background,
+                      borderColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setAccType('FLEXIBLE_SAVINGS')}
+                  activeOpacity={0.7}
+                >
+                  <TrendingUp size={18} color={accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.textLight} />
+                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.text }]}>
+                    Flexible
+                  </Text>
+                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Rendimiento</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeCardOption,
+                    {
+                      backgroundColor: accType === 'FIXED_TERM' ? colors.warningSoft : colors.background,
+                      borderColor: accType === 'FIXED_TERM' ? colors.warning : colors.border,
+                    },
+                  ]}
+                  onPress={() => setAccType('FIXED_TERM')}
+                  activeOpacity={0.7}
+                >
+                  <Calendar size={18} color={accType === 'FIXED_TERM' ? colors.warningText : colors.textLight} />
+                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FIXED_TERM' ? colors.warningText : colors.text }]}>
+                    Plazo Fijo
+                  </Text>
+                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>A término</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Nombre de la Cuenta */}
+              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Nombre de la cuenta</Text>
+              <TextInput
+                style={[
+                  styles.formTextInput,
+                  { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+                ]}
+                placeholder="Ej. Billetera Digital, Banco Galicia, Ahorros"
+                placeholderTextColor={colors.textLight}
+                value={accName}
+                onChangeText={setAccName}
+              />
+
+              {/* Saldo Inicial / Capital */}
+              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+                {accType === 'FIXED_TERM' ? 'Capital a Invertir ($)' : 'Saldo Inicial ($)'}
+              </Text>
+              <TextInput
+                style={[
+                  styles.formTextInput,
+                  { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+                ]}
+                placeholder="0.00"
+                placeholderTextColor={colors.textLight}
+                keyboardType="decimal-pad"
+                value={accBalance}
+                onChangeText={setAccBalance}
+              />
+
+              {/* Tasa Nominal Anual si es Flexible o Plazo Fijo */}
+              {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
+                <>
+                  <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+                    Tasa Nominal Anual (TNA %)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.formTextInput,
+                      { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+                    ]}
+                    placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
+                    placeholderTextColor={colors.textLight}
+                    keyboardType="decimal-pad"
+                    value={accTNA}
+                    onChangeText={setAccTNA}
+                  />
+                </>
+              )}
+
+              {/* Plazo en Meses si es Plazo Fijo */}
+              {accType === 'FIXED_TERM' && (
+                <>
+                  <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Plazo de vencimiento</Text>
+                  <View style={styles.termMonthsRow}>
+                    {['1', '3', '6', '12'].map((m) => (
+                      <TouchableOpacity
+                        key={m}
+                        style={[
+                          styles.termMonthPill,
+                          {
+                            backgroundColor: accTermMonths === m ? colors.primary : colors.inputBackground,
+                            borderColor: accTermMonths === m ? colors.primary : colors.border,
+                          },
+                        ]}
+                        onPress={() => setAccTermMonths(m)}
+                      >
+                        <Text
+                          style={[
+                            styles.termMonthPillText,
+                            { color: accTermMonths === m ? colors.onPrimary : colors.text },
+                          ]}
+                        >
+                          {m} {m === '1' ? 'mes' : 'meses'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* Botón Crear Cuenta */}
+              <TouchableOpacity
+                style={[
+                  styles.submitTransactionButton,
+                  { backgroundColor: colors.primary, marginTop: 24, opacity: isCreatingAccount ? 0.7 : 1 },
+                ]}
+                onPress={handleCreateAccount}
+                disabled={isCreatingAccount}
+              >
+                {isCreatingAccount ? (
+                  <ActivityIndicator color={colors.onPrimary} />
+                ) : (
+                  <Text style={[styles.submitTransactionButtonText, { color: colors.onPrimary }]}>
+                    Crear Cuenta
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1456,4 +1734,112 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+
+  // Estilos Creación de Cuenta
+  addAccountHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  addAccountHeaderText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  createAccountPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  createAccountPrimaryBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  addAccountDashedCard: {
+    width: 140,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    gap: 6,
+  },
+  addAccountIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  addAccountDashedTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  addAccountDashedSubtext: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  accountTypeSelectorRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  accountTypeCardOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    gap: 4,
+  },
+  accountTypeOptionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  accountTypeOptionDesc: {
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  formTextInput: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  termMonthsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  termMonthPill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  termMonthPillText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
 });
+
