@@ -12,6 +12,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import { MotiView } from 'moti';
+import { MotiPressable } from 'moti/interactions';
 import {
   Sun,
   Moon,
@@ -539,7 +541,12 @@ export default function HomeScreen() {
         }
       >
         {/* HERO SECTION: Balance Consolidado al aire libre */}
-        <View style={styles.heroContainer}>
+        <MotiView
+          from={{ opacity: 0, translateY: 15 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 500 }}
+          style={styles.heroContainer}
+        >
           <View style={styles.heroLabelRow}>
             <Text style={[styles.heroLabel, { color: colors.textLight }]}>BALANCE CONSOLIDADO</Text>
             <TouchableOpacity
@@ -590,40 +597,61 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </MotiView>
 
-        {/* SymmetricGrid: Botones de Acción Primarios */}
+        {/* SymmetricGrid: Botones de Acción Primarios con feedback táctil (MotiPressable) */}
         <View style={styles.actionGrid}>
           {/* Botón Ingreso */}
-          <TouchableOpacity
+          <MotiPressable
+            containerStyle={{ flex: 1 }}
             style={[styles.primaryActionBtn, { backgroundColor: colors.success }]}
+            animate={({ pressed }) => {
+              'worklet';
+              return {
+                scale: pressed ? 0.96 : 1,
+              };
+            }}
+            transition={{
+              type: 'timing',
+              duration: 100,
+            }}
             onPress={() => {
               setTxType('INCOME');
               setIsTxModalVisible(true);
             }}
-            activeOpacity={0.85}
           >
             <View style={styles.actionIconCircle}>
               <Plus size={20} color={colors.onSuccess} strokeWidth={2.5} />
             </View>
             <Text style={[styles.primaryActionText, { color: colors.onSuccess }]}>Ingreso</Text>
-          </TouchableOpacity>
+          </MotiPressable>
 
           {/* Botón Gasto */}
-          <TouchableOpacity
+          <MotiPressable
+            containerStyle={{ flex: 1 }}
             style={[styles.primaryActionBtn, { backgroundColor: colors.error }]}
+            animate={({ pressed }) => {
+              'worklet';
+              return {
+                scale: pressed ? 0.96 : 1,
+              };
+            }}
+            transition={{
+              type: 'timing',
+              duration: 100,
+            }}
             onPress={() => {
               setTxType('EXPENSE');
               setIsTxModalVisible(true);
             }}
-            activeOpacity={0.85}
           >
             <View style={styles.actionIconCircle}>
               <Minus size={20} color={colors.onError} strokeWidth={2.5} />
             </View>
             <Text style={[styles.primaryActionText, { color: colors.onError }]}>Gasto</Text>
-          </TouchableOpacity>
+          </MotiPressable>
         </View>
+
 
         {/* Sección Cuentas */}
         <View style={styles.sectionHeaderRow}>
@@ -888,51 +916,57 @@ export default function HomeScreen() {
               });
 
               return (
-                <TouchableOpacity
+                <MotiView
                   key={tx.id}
-                  style={[
-                    styles.transactionItemRow,
-                    !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                  ]}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/transaction/[id]',
-                      params: { id: tx.id },
-                    });
-                  }}
-                  activeOpacity={0.7}
+                  from={{ opacity: 0, translateY: 10 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  transition={{ type: 'timing', duration: 350, delay: idx * 50 }}
                 >
-                  <View
+                  <TouchableOpacity
                     style={[
-                      styles.transactionIconContainer,
-                      { backgroundColor: isIncome ? colors.successSoft : colors.errorSoft },
+                      styles.transactionItemRow,
+                      !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
                     ]}
+                    onPress={() => {
+                      router.push({
+                        pathname: '/transaction/[id]',
+                        params: { id: tx.id },
+                      });
+                    }}
+                    activeOpacity={0.7}
                   >
-                    {isIncome ? (
-                      <Plus size={16} color={colors.successText} strokeWidth={2.5} />
-                    ) : (
-                      <Minus size={16} color={colors.errorText} strokeWidth={2.5} />
-                    )}
-                  </View>
+                    <View
+                      style={[
+                        styles.transactionIconContainer,
+                        { backgroundColor: isIncome ? colors.successSoft : colors.errorSoft },
+                      ]}
+                    >
+                      {isIncome ? (
+                        <Plus size={16} color={colors.successText} strokeWidth={2.5} />
+                      ) : (
+                        <Minus size={16} color={colors.errorText} strokeWidth={2.5} />
+                      )}
+                    </View>
 
-                  <View style={styles.transactionDetails}>
-                    <Text style={[styles.transactionTitle, { color: colors.text }]} numberOfLines={1}>
-                      {tx.description || (isIncome ? 'Ingreso' : 'Gasto')}
-                    </Text>
-                    <Text style={[styles.transactionMeta, { color: colors.textLight }]}>
-                      {tx.splits?.[0]?.accountName ?? 'Cuenta'} • {dateFormatted}
-                    </Text>
-                  </View>
+                    <View style={styles.transactionDetails}>
+                      <Text style={[styles.transactionTitle, { color: colors.text }]} numberOfLines={1}>
+                        {tx.description || (isIncome ? 'Ingreso' : 'Gasto')}
+                      </Text>
+                      <Text style={[styles.transactionMeta, { color: colors.textLight }]}>
+                        {tx.splits?.[0]?.accountName ?? 'Cuenta'} • {dateFormatted}
+                      </Text>
+                    </View>
 
-                  <Text
-                    style={[
-                      styles.transactionValue,
-                      { color: isIncome ? colors.successText : colors.text },
-                    ]}
-                  >
-                    {isIncome ? '+' : '-'}{formatCurrency(tx.totalAmount, true)}
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.transactionValue,
+                        { color: isIncome ? colors.successText : colors.text },
+                      ]}
+                    >
+                      {isIncome ? '+' : '-'}{formatCurrency(tx.totalAmount, true)}
+                    </Text>
+                  </TouchableOpacity>
+                </MotiView>
               );
             })}
           </View>
