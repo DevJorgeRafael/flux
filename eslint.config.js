@@ -6,5 +6,8 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
-  }
+    rules: {
+      "max-lines": ["error", { "max": 450, "skipBlankLines": true, "skipComments": true }],
+    },
+  },
 ]);

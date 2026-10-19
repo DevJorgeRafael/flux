@@ -35,6 +35,8 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.21.0",
     "eslint-config-expo": "~57.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -43,7 +45,13 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings=0"
+    ]
   },
   "private": true
 }
