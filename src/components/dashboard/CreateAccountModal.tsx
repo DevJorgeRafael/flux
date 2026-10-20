@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { X, CreditCard, TrendingUp, Calendar } from 'lucide-react-native';
-import Animated, { LinearTransition, Easing } from 'react-native-reanimated';
+import { MotiView, AnimatePresence } from 'moti';
+import { LinearTransition, Easing } from 'react-native-reanimated';
 import { AccountType } from '@/core/models/account';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteAccountRepository } from '@/infrastructure/repositories';
@@ -88,13 +89,34 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]}>
-        <Animated.View
+      <View style={styles.modalBackdrop}>
+        {/* Backdrop animado con timing limpio */}
+        <MotiView
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: 'timing', duration: 200 }}
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </MotiView>
+
+        {/* Sheet animado con la misma animación limpia y concreta de settings (timing 200ms) */}
+        <MotiView
+          from={{ translateY: 350, opacity: 0 }}
+          animate={{ translateY: 0, opacity: 1 }}
+          transition={{ type: 'timing', duration: 200 }}
           layout={LinearTransition.duration(200).easing(Easing.out(Easing.cubic))}
-          style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' }]}
+          style={[
+            styles.modalSheet,
+            { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' },
+          ]}
         >
           <View style={styles.modalTopBar}>
             <Text style={[styles.modalHeading, { color: colors.text }]}>Nueva Cuenta</Text>
@@ -193,55 +215,71 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
               />
 
               {/* Tasa Nominal Anual si es Flexible o Plazo Fijo */}
-              {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
-                <View>
-                  <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-                    Tasa Nominal Anual (TNA %)
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.formTextInput,
-                      { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
-                    ]}
-                    placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
-                    placeholderTextColor={colors.textLight}
-                    keyboardType="decimal-pad"
-                    value={accTNA}
-                    onChangeText={setAccTNA}
-                  />
-                </View>
-              )}
+              <AnimatePresence>
+                {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
+                  <MotiView
+                    from={{ opacity: 0, translateY: -10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    exit={{ opacity: 0, translateY: -10 }}
+                    transition={{ type: 'timing', duration: 200 }}
+                  >
+                    <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+                      Tasa Nominal Anual (TNA %)
+                    </Text>
+                    <TextInput
+                      style={[
+                        styles.formTextInput,
+                        { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+                      ]}
+                      placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
+                      placeholderTextColor={colors.textLight}
+                      keyboardType="decimal-pad"
+                      value={accTNA}
+                      onChangeText={setAccTNA}
+                    />
+                  </MotiView>
+                )}
+              </AnimatePresence>
 
               {/* Plazo en Meses si es Plazo Fijo */}
-              {accType === 'FIXED_TERM' && (
-                <View>
-                  <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Plazo de vencimiento</Text>
-                  <View style={styles.termMonthsRow}>
-                    {['1', '3', '6', '12'].map((m) => (
-                      <TouchableOpacity
-                        key={m}
-                        style={[
-                          styles.termMonthPill,
-                          {
-                            backgroundColor: accTermMonths === m ? colors.primary : colors.inputBackground,
-                            borderColor: accTermMonths === m ? colors.primary : colors.border,
-                          },
-                        ]}
-                        onPress={() => setAccTermMonths(m)}
-                      >
-                        <Text
+              <AnimatePresence>
+                {accType === 'FIXED_TERM' && (
+                  <MotiView
+                    from={{ opacity: 0, translateY: -10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    exit={{ opacity: 0, translateY: -10 }}
+                    transition={{ type: 'timing', duration: 200 }}
+                  >
+                    <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+                      Plazo de vencimiento
+                    </Text>
+                    <View style={styles.termMonthsRow}>
+                      {['1', '3', '6', '12'].map((m) => (
+                        <TouchableOpacity
+                          key={m}
                           style={[
-                            styles.termMonthPillText,
-                            { color: accTermMonths === m ? colors.onPrimary : colors.text },
+                            styles.termMonthPill,
+                            {
+                              backgroundColor: accTermMonths === m ? colors.primary : colors.inputBackground,
+                              borderColor: accTermMonths === m ? colors.primary : colors.border,
+                            },
                           ]}
+                          onPress={() => setAccTermMonths(m)}
                         >
-                          {m} {m === '1' ? 'mes' : 'meses'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
+                          <Text
+                            style={[
+                              styles.termMonthPillText,
+                              { color: accTermMonths === m ? colors.onPrimary : colors.text },
+                            ]}
+                          >
+                            {m} {m === '1' ? 'mes' : 'meses'}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </MotiView>
+                )}
+              </AnimatePresence>
 
               {/* Botón Crear Cuenta */}
               <TouchableOpacity
@@ -262,7 +300,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </Animated.View>
+        </MotiView>
       </View>
     </Modal>
   );

@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { X } from 'lucide-react-native';
+import { MotiView } from 'moti';
 import { TransactionType } from '@/core/models/transaction';
 import { Account } from '@/core/models/account';
 import { Category } from '@/core/models/category';
@@ -115,11 +116,31 @@ export function CreateTransactionModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]}>
-        <View style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}>
+      <View style={styles.modalBackdrop}>
+        {/* Backdrop animado con timing limpio */}
+        <MotiView
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: 'timing', duration: 200 }}
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </MotiView>
+
+        {/* Sheet animado con la misma animación limpia y concreta (timing 200ms) */}
+        <MotiView
+          from={{ translateY: 350, opacity: 0 }}
+          animate={{ translateY: 0, opacity: 1 }}
+          transition={{ type: 'timing', duration: 200 }}
+          style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
+        >
           <View style={styles.modalTopBar}>
             <Text style={[styles.modalHeading, { color: colors.text }]}>
               {txType === 'INCOME' ? 'Registrar Ingreso' : 'Registrar Gasto'}
@@ -289,7 +310,7 @@ export function CreateTransactionModal({
               <Text style={styles.submitTransactionButtonText}>Guardar Movimiento</Text>
             )}
           </TouchableOpacity>
-        </View>
+        </MotiView>
       </View>
     </Modal>
   );
