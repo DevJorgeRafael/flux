@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { X, CreditCard, TrendingUp, Calendar } from 'lucide-react-native';
+import Animated, { LinearTransition, Easing } from 'react-native-reanimated';
 import { AccountType } from '@/core/models/account';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteAccountRepository } from '@/infrastructure/repositories';
@@ -91,7 +92,8 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       onRequestClose={onClose}
     >
       <View style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]}>
-        <View
+        <Animated.View
+          layout={LinearTransition.duration(200).easing(Easing.out(Easing.cubic))}
           style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' }]}
         >
           <View style={styles.modalTopBar}>
@@ -260,7 +262,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
