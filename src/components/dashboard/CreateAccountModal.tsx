@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import Animated, { LinearTransition, FadeIn, FadeOut } from 'react-native-reanimated';
 import { X, CreditCard, TrendingUp, Calendar } from 'lucide-react-native';
 import { AccountType } from '@/core/models/account';
 import { useColors, useInsets } from '@/components/ui/theme';
@@ -92,8 +91,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       onRequestClose={onClose}
     >
       <View style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]}>
-        <Animated.View
-          layout={LinearTransition.duration(200)}
+        <View
           style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' }]}
         >
           <View style={styles.modalTopBar}>
@@ -104,7 +102,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
-            <Animated.View layout={LinearTransition.duration(200)}>
+            <View>
               {/* Selector de Tipo de Cuenta */}
               <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>Tipo de Cuenta</Text>
               <View style={styles.accountTypeSelectorRow}>
@@ -194,11 +192,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
 
               {/* Tasa Nominal Anual si es Flexible o Plazo Fijo */}
               {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
-                <Animated.View
-                  entering={FadeIn.duration(200)}
-                  exiting={FadeOut.duration(150)}
-                  layout={LinearTransition.duration(200)}
-                >
+                <View>
                   <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
                     Tasa Nominal Anual (TNA %)
                   </Text>
@@ -213,16 +207,12 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                     value={accTNA}
                     onChangeText={setAccTNA}
                   />
-                </Animated.View>
+                </View>
               )}
 
               {/* Plazo en Meses si es Plazo Fijo */}
               {accType === 'FIXED_TERM' && (
-                <Animated.View
-                  entering={FadeIn.duration(200)}
-                  exiting={FadeOut.duration(150)}
-                  layout={LinearTransition.duration(200)}
-                >
+                <View>
                   <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Plazo de vencimiento</Text>
                   <View style={styles.termMonthsRow}>
                     {['1', '3', '6', '12'].map((m) => (
@@ -248,7 +238,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                       </TouchableOpacity>
                     ))}
                   </View>
-                </Animated.View>
+                </View>
               )}
 
               {/* Botón Crear Cuenta */}
@@ -268,9 +258,9 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                   </Text>
                 )}
               </TouchableOpacity>
-            </Animated.View>
+            </View>
           </ScrollView>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
