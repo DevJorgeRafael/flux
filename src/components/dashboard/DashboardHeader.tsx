@@ -1,16 +1,19 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Pressable } from 'react-native';
-import { Sun, Moon, Settings, RotateCcw, Sparkles } from 'lucide-react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { Sun, Moon, Settings, RotateCcw, Sparkles, Languages } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { useColors } from '@/components/ui/theme';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface DashboardHeaderProps {
   isSettingsOpen: boolean;
   isDevMode: boolean;
   isDark: boolean;
+  language: 'es' | 'en';
   toggleSettings: () => void;
   closeSettings: () => void;
   toggleTheme: () => void;
+  toggleLanguage: () => void;
   handleSeedDemoData: () => void;
   handleResetAllData: () => void;
 }
@@ -19,29 +22,22 @@ export function DashboardHeader({
   isSettingsOpen,
   isDevMode,
   isDark,
+  language,
   toggleSettings,
   closeSettings,
   toggleTheme,
+  toggleLanguage,
   handleSeedDemoData,
   handleResetAllData,
 }: DashboardHeaderProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   return (
     <>
-      {/* Backdrop transparente para cerrar el menú desplegable al tocar fuera */}
-      {isSettingsOpen && (
-        <Pressable
-          style={[styles.backdropPressable, { zIndex: 90 }]}
-          onPress={closeSettings}
-        />
-      )}
-
-      {/* Top Header con menú de Configuración / Engranaje */}
-      <View style={[styles.topHeader, { zIndex: 100 }]}>
+      <View style={styles.topHeader} pointerEvents="box-none">
         <View style={styles.topHeaderSpacer} />
         <View style={styles.topHeaderActions}>
-          {/* Botón Principal de Engranaje */}
           <TouchableOpacity
             style={[
               styles.gearMainBtn,
@@ -52,7 +48,7 @@ export function DashboardHeader({
             ]}
             onPress={toggleSettings}
             activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('settings')}
           >
             <Settings
               size={20}
@@ -61,78 +57,80 @@ export function DashboardHeader({
             />
           </TouchableOpacity>
 
-          {/* Menú Desplegable Vertical hacia abajo (Dropdown) */}
           <MotiView
+            from={{ opacity: 0, scale: 0.82, translateY: -8 }}
             animate={{
-              scaleY: isSettingsOpen ? 1 : 0,
               opacity: isSettingsOpen ? 1 : 0,
-              translateY: isSettingsOpen ? 0 : -20,
+              scale: isSettingsOpen ? 1 : 0.82,
+              translateY: isSettingsOpen ? 0 : -8,
             }}
-            transition={{
-              type: 'timing',
-              duration: 200,
-            }}
-            style={[
-              styles.settingsDropdownVertical,
-              {
-                transformOrigin: 'top',
-              },
-            ]}
+            transition={{ type: 'spring', damping: 18, stiffness: 260, mass: 0.7 }}
+            style={[styles.settingsPopover, { backgroundColor: colors.surface, borderColor: colors.border }]}
             pointerEvents={isSettingsOpen ? 'auto' : 'none'}
           >
-            {/* Opción Modo Oscuro / Claro */}
-            <TouchableOpacity
-              style={[
-                styles.gearOptionBtn,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-              onPress={() => {
-                toggleTheme();
-                closeSettings();
-              }}
-              activeOpacity={0.7}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              {isDark ? (
-                <Sun size={18} color={colors.text} strokeWidth={2} />
-              ) : (
-                <Moon size={18} color={colors.text} strokeWidth={2} />
-              )}
-            </TouchableOpacity>
+            <Text style={[styles.menuTitle, { color: colors.text }]}>{t('settings')}</Text>
 
-            {/* Opción Cargar Demo (Dev Only) */}
+            <View style={[styles.menuRow, { borderTopColor: colors.border }]}>
+              <View style={styles.menuRowLabel}>
+                {isDark ? (
+                  <Moon size={17} color={colors.primaryText} />
+                ) : (
+                  <Sun size={17} color={colors.primaryText} />
+                )}
+                <Text style={[styles.menuLabel, { color: colors.text }]}>{t('theme')}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggleButton, { backgroundColor: colors.primarySoft }]}
+                onPress={toggleTheme}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.toggleText, { color: colors.primaryText }]}>
+                  {isDark ? t('dark') : t('light')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.menuRow, { borderTopColor: colors.border }]}>
+              <View style={styles.menuRowLabel}>
+                <Languages size={17} color={colors.primaryText} />
+                <Text style={[styles.menuLabel, { color: colors.text }]}>{t('language')}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggleButton, { backgroundColor: colors.primarySoft }]}
+                onPress={toggleLanguage}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.toggleText, { color: colors.primaryText }]}>
+                  {language.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {isDevMode && (
               <TouchableOpacity
-                style={[
-                  styles.gearOptionBtn,
-                  { backgroundColor: colors.primarySoft, borderColor: colors.border },
-                ]}
+                style={[styles.actionRow, { borderTopColor: colors.border }]}
                 onPress={() => {
-                  handleSeedDemoData();
                   closeSettings();
+                  handleSeedDemoData();
                 }}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                activeOpacity={0.75}
               >
-                <Sparkles size={18} color={colors.primaryText} strokeWidth={2.2} />
+                <Sparkles size={17} color={colors.primaryText} />
+                <Text style={[styles.menuLabel, { color: colors.text }]}>{t('demoMode')}</Text>
               </TouchableOpacity>
             )}
 
-            {/* Opción Reiniciar / Limpiar (Dev Only) */}
             {isDevMode && (
               <TouchableOpacity
-                style={[
-                  styles.gearOptionBtn,
-                  { backgroundColor: colors.errorSoft, borderColor: colors.border },
-                ]}
+                style={[styles.actionRow, { borderTopColor: colors.border }]}
                 onPress={() => {
                   closeSettings();
                   handleResetAllData();
                 }}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                activeOpacity={0.75}
               >
-                <RotateCcw size={18} color={colors.errorText} strokeWidth={2.2} />
+                <RotateCcw size={17} color={colors.errorText} />
+                <Text style={[styles.menuLabel, { color: colors.errorText }]}>{t('resetData')}</Text>
               </TouchableOpacity>
             )}
           </MotiView>
@@ -157,27 +155,67 @@ const styles = StyleSheet.create({
   },
   topHeaderActions: {
     position: 'relative',
-    alignItems: 'center',
-    zIndex: 100,
+    alignItems: 'flex-end',
+    zIndex: 101,
   },
-  backdropPressable: {
-    ...StyleSheet.absoluteFill,
-  },
-  settingsDropdownVertical: {
+  settingsPopover: {
     position: 'absolute',
     top: 48,
     right: 0,
-    zIndex: 110,
-    alignItems: 'center',
-    gap: 8,
-  },
-  gearOptionBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 224,
+    borderRadius: 18,
     borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 10,
+    transformOrigin: 'top right',
+  },
+  menuTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  menuRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    marginTop: 4,
+    paddingTop: 4,
+  },
+  menuRowLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderTopWidth: 1,
+    marginTop: 4,
+    paddingTop: 4,
+  },
+  menuLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  toggleButton: {
+    minWidth: 58,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   gearMainBtn: {
     width: 40,

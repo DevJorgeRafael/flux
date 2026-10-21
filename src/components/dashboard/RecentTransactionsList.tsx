@@ -11,6 +11,7 @@ import { ChevronRight, Plus, Minus } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { Transaction } from '@/core/models/transaction';
 import { useColors } from '@/components/ui/theme';
+import { useTranslation } from '@/core/i18n/useTranslation';
 import { formatCurrency } from '@/core/utils/currency';
 
 interface RecentTransactionsListProps {
@@ -27,6 +28,7 @@ export function RecentTransactionsList({
   defaultAccountId,
 }: RecentTransactionsListProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   const handleSeeMore = () => {
     const targetId = selectedFilterAccountId || defaultAccountId;
@@ -45,7 +47,7 @@ export function RecentTransactionsList({
       {/* Sección Últimos Movimientos con botón 'Ver más →' */}
       <View style={[styles.sectionHeaderRow, { marginTop: 32 }]}>
         <View>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Últimos Movimientos</Text>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>{t('latestMovements')}</Text>
           {selectedAccountName && (
             <Text style={[styles.sectionSubfilter, { color: colors.primaryText }]}>
               Filtrado por: {selectedAccountName}
@@ -60,7 +62,7 @@ export function RecentTransactionsList({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={[styles.seeMoreText, { color: colors.text }]}>Ver más</Text>
+          <Text style={[styles.seeMoreText, { color: colors.text }]}>{t('seeMore')}</Text>
           <ChevronRight size={14} color={colors.textLight} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
@@ -70,7 +72,7 @@ export function RecentTransactionsList({
           <Text style={[styles.emptySubtext, { color: colors.textLight }]}>
             {selectedFilterAccountId
               ? 'Esta cuenta no tiene movimientos registrados.'
-              : 'No hay movimientos registrados en este período.'}
+              : t('noMovementsPeriod')}
           </Text>
         </View>
       ) : (
@@ -118,10 +120,10 @@ export function RecentTransactionsList({
 
                   <View style={styles.transactionDetails}>
                     <Text style={[styles.transactionTitle, { color: colors.text }]} numberOfLines={1}>
-                      {tx.description || (isIncome ? 'Ingreso' : 'Gasto')}
+                      {tx.description || (isIncome ? t('income') : t('expense'))}
                     </Text>
                     <Text style={[styles.transactionMeta, { color: colors.textLight }]}>
-                      {tx.splits?.[0]?.accountName ?? 'Cuenta'} • {dateFormatted}
+                      {tx.splits?.[0]?.accountName ?? t('account')} • {dateFormatted}
                     </Text>
                   </View>
 

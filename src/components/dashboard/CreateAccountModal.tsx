@@ -21,18 +21,27 @@ import {
   calculateFixedTermMaturity,
 } from '@/core/services/interest-calculator';
 import { AccountProjectionPreview } from '@/components/dashboard/AccountProjectionPreview';
+import { useTranslation } from '@/core/i18n/useTranslation';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 interface CreateAccountModalProps {
   visible: boolean;
   onClose: () => void;
   onAccountCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const accountRepo = new SqliteAccountRepository();
 
-export function CreateAccountModal({ visible, onClose, onAccountCreated }: CreateAccountModalProps) {
+export function CreateAccountModal({
+  visible,
+  onClose,
+  onAccountCreated,
+  blurTarget,
+}: CreateAccountModalProps) {
   const colors = useColors();
   const insets = useInsets();
+  const { t } = useTranslation();
 
   const [accName, setAccName] = useState('');
   const [accType, setAccType] = useState<AccountType>('CHECKING');
@@ -155,19 +164,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       animationType="none"
       onRequestClose={handleClose}
     >
-      {/* Backdrop con fade */}
-      <MotiView
-        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        style={[StyleSheet.absoluteFill, styles.backdrop, { backgroundColor: colors.overlay }]}
-        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-      </MotiView>
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — solo slide up/down, sin layout animation ni Reanimated */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
@@ -184,7 +181,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
           ]}
         >
           <View style={styles.modalTopBar}>
-            <Text style={[styles.modalHeading, { color: colors.text }]}>Nueva Cuenta</Text>
+            <Text style={[styles.modalHeading, { color: colors.text }]}>{t('newAccountTitle')}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <X size={22} color={colors.textLight} strokeWidth={2} />
             </TouchableOpacity>
@@ -192,7 +189,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
             {/* Selector de Tipo de Cuenta */}
-            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>Tipo de Cuenta</Text>
+            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>{t('accountType')}</Text>
             <View style={styles.accountTypeSelectorRow}>
               <TouchableOpacity
                 style={[
@@ -207,9 +204,9 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
               >
                 <CreditCard size={18} color={accType === 'CHECKING' ? colors.primaryText : colors.textLight} />
                 <Text style={[styles.accountTypeOptionTitle, { color: accType === 'CHECKING' ? colors.primaryText : colors.text }]}>
-                  Corriente
+                  {t('checking')}
                 </Text>
-                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Operaciones</Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>{t('operations')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -227,7 +224,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                 <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.text }]}>
                   Flexible
                 </Text>
-                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Rendimiento</Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>{t('returnLabel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -243,20 +240,20 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
               >
                 <Calendar size={18} color={accType === 'FIXED_TERM' ? colors.warningText : colors.textLight} />
                 <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FIXED_TERM' ? colors.warningText : colors.text }]}>
-                  Plazo Fijo
+                  {t('fixedTerm')}
                 </Text>
-                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>A término</Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>{t('atTerm')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Nombre de la Cuenta */}
-            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Nombre de la cuenta</Text>
+            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>{t('accountName')}</Text>
             <TextInput
               style={[
                 styles.formTextInput,
                 { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
               ]}
-              placeholder="Ej. Billetera Digital, Personal, Ahorros"
+              placeholder={t('accountNamePlaceholder')}
               placeholderTextColor={colors.textLight}
               value={accName}
               onChangeText={setAccName}
@@ -264,7 +261,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
 
             {/* Saldo Inicial / Capital */}
             <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-              {accType === 'FIXED_TERM' ? 'Capital a Invertir ($)' : 'Saldo Inicial ($)'}
+              {accType === 'FIXED_TERM' ? t('investedCapital') : t('initialBalance')}
             </Text>
             <TextInput
               style={[
@@ -282,14 +279,18 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
             {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
               <Animated.View entering={FadeIn.duration(150)}>
                 <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-                  Tasa Nominal Anual (TNA %)
+                  {t('annualRate')}
                 </Text>
                 <TextInput
                   style={[
                     styles.formTextInput,
                     { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
                   ]}
-                  placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
+                  placeholder={
+                    accType === 'FLEXIBLE_SAVINGS'
+                      ? t('annualRateFlexiblePlaceholder')
+                      : t('annualRateFixedPlaceholder')
+                  }
                   placeholderTextColor={colors.textLight}
                   keyboardType="decimal-pad"
                   value={accTNA}
@@ -301,7 +302,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
             {/* Plazo en Meses con fade in */}
             {accType === 'FIXED_TERM' && (
               <Animated.View entering={FadeIn.duration(150)}>
-                <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Plazo de vencimiento</Text>
+                <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>{t('maturityTerm')}</Text>
                 <View style={styles.termMonthsRow}>
                   {['1', '3', '6', '12'].map((m) => (
                     <TouchableOpacity
@@ -321,7 +322,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                           { color: accTermMonths === m ? colors.onPrimary : colors.text },
                         ]}
                       >
-                        {m} {m === '1' ? 'mes' : 'meses'}
+                        {m} {m === '1' ? t('month') : t('months')}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -350,7 +351,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                 <ActivityIndicator color={colors.onPrimary} />
               ) : (
                 <Text style={[styles.submitTransactionButtonText, { color: colors.onPrimary }]}>
-                  Crear Cuenta
+                  {t('createAccount')}
                 </Text>
               )}
             </TouchableOpacity>
@@ -368,12 +369,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
+    zIndex: 1,
+    elevation: 1,
   },
   modalSheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
+    zIndex: 1,
+    elevation: 1,
   },
   modalTopBar: {
     flexDirection: 'row',

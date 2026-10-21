@@ -17,6 +17,8 @@ import { Account } from '@/core/models/account';
 import { Category } from '@/core/models/category';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteTransactionRepository } from '@/infrastructure/repositories';
+import { useTranslation } from '@/core/i18n/useTranslation';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 interface CreateTransactionModalProps {
   visible: boolean;
@@ -25,6 +27,7 @@ interface CreateTransactionModalProps {
   categories: Category[];
   onClose: () => void;
   onTransactionCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const transactionRepo = new SqliteTransactionRepository();
@@ -36,9 +39,11 @@ export function CreateTransactionModal({
   categories,
   onClose,
   onTransactionCreated,
+  blurTarget,
 }: CreateTransactionModalProps) {
   const colors = useColors();
   const insets = useInsets();
+  const { t } = useTranslation();
 
   const [txType, setTxType] = useState<TransactionType>(initialType);
   const [txAmount, setTxAmount] = useState('');
@@ -153,19 +158,7 @@ export function CreateTransactionModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      {/* Backdrop con fade timing */}
-      <MotiView
-        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
-        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-      </MotiView>
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — slide up/down sin layout animation */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
@@ -179,7 +172,7 @@ export function CreateTransactionModal({
         >
           <View style={styles.modalTopBar}>
             <Text style={[styles.modalHeading, { color: colors.text }]}>
-              {txType === 'INCOME' ? 'Registrar Ingreso' : 'Registrar Gasto'}
+              {txType === 'INCOME' ? t('registerIncome') : t('registerExpense')}
             </Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <X size={22} color={colors.textLight} strokeWidth={2} />
@@ -188,22 +181,6 @@ export function CreateTransactionModal({
 
           {/* Segmented Control de Tipo */}
           <View style={[styles.typeSegmentedControl, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <TouchableOpacity
-              style={[
-                styles.typeSegmentOption,
-                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
-              ]}
-              onPress={() => setTxType('EXPENSE')}
-            >
-              <Text
-                style={[
-                  styles.typeSegmentText,
-                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
-                ]}
-              >
-                Gasto
-              </Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.typeSegmentOption,
@@ -217,13 +194,29 @@ export function CreateTransactionModal({
                   { color: txType === 'INCOME' ? colors.onSuccess : colors.textLight },
                 ]}
               >
-                Ingreso
+                {t('income')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.typeSegmentOption,
+                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
+              ]}
+              onPress={() => setTxType('EXPENSE')}
+            >
+              <Text
+                style={[
+                  styles.typeSegmentText,
+                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
+                ]}
+              >
+                {t('expense')}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Input de Monto */}
-          <Text style={[styles.formLabel, { color: colors.textLight }]}>Monto ($ USD)</Text>
+          <Text style={[styles.formLabel, { color: colors.textLight }]}>{t('amount')}</Text>
           <TextInput
             style={[
               styles.largeAmountInput,
@@ -242,7 +235,7 @@ export function CreateTransactionModal({
           />
 
           {/* Input de Descripción */}
-          <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Descripción</Text>
+          <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>{t('description')}</Text>
           <TextInput
             style={[
               styles.standardInput,
@@ -252,7 +245,7 @@ export function CreateTransactionModal({
                 borderColor: colors.border,
               },
             ]}
-            placeholder="Ej. Supermercado, Factura de luz..."
+            placeholder={t('descriptionPlaceholder')}
             placeholderTextColor={colors.textLight}
             value={txDesc}
             onChangeText={setTxDesc}
@@ -261,7 +254,7 @@ export function CreateTransactionModal({
           {/* Selector de Categoría */}
           {categories.length > 0 && (
             <>
-              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Categoría</Text>
+              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>{t('category')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
                 {categories
                   .filter((c) => (txType === 'INCOME' ? c.type === 'INCOME' : c.type === 'EXPENSE'))
@@ -297,7 +290,7 @@ export function CreateTransactionModal({
           {/* Selector de Cuenta */}
           {accounts.length > 0 && (
             <>
-              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 10 }]}>Cuenta Destino</Text>
+              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 10 }]}>{t('destinationAccount')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
                 {accounts.map((acc) => (
                   <TouchableOpacity
@@ -343,7 +336,7 @@ export function CreateTransactionModal({
             {isSubmitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitTransactionButtonText}>Guardar Movimiento</Text>
+              <Text style={styles.submitTransactionButtonText}>{t('saveMovement')}</Text>
             )}
           </TouchableOpacity>
         </MotiView>
@@ -356,12 +349,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
+    zIndex: 1,
+    elevation: 1,
   },
   modalSheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
+    zIndex: 1,
+    elevation: 1,
   },
   modalTopBar: {
     flexDirection: 'row',

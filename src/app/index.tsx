@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,10 +18,14 @@ import { AccountCarousel } from '@/components/dashboard/AccountCarousel';
 import { RecentTransactionsList } from '@/components/dashboard/RecentTransactionsList';
 import { CreateAccountModal } from '@/components/dashboard/CreateAccountModal';
 import { CreateTransactionModal } from '@/components/dashboard/CreateTransactionModal';
+import { useTranslation } from '@/core/i18n/useTranslation';
+import { BlurTargetView } from 'expo-blur';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useInsets();
+  const blurTarget = useRef<View>(null);
 
   // Custom Hooks
   const {
@@ -53,6 +57,7 @@ export default function DashboardScreen() {
     toggleSettings,
     closeSettings,
   } = useThemeDropdown();
+  const { language, toggleLanguage } = useTranslation();
 
   // Modal UI States
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
@@ -79,25 +84,14 @@ export default function DashboardScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      {/* Top Header con menú de Configuración / Engranaje */}
-      <DashboardHeader
-        isSettingsOpen={isSettingsOpen}
-        isDevMode={isDevMode}
-        isDark={isDark}
-        toggleSettings={toggleSettings}
-        closeSettings={closeSettings}
-        toggleTheme={toggleTheme}
-        handleSeedDemoData={handleSeedDemoData}
-        handleResetAllData={handleResetAllData}
-      />
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-        }
-      >
+      <BlurTargetView ref={blurTarget} style={styles.blurTarget}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
+        >
         {/* Balance Consolidado y Métricas */}
         <DashboardHero totalBalance={totalBalance} monthlyTotals={monthlyTotals} />
 
@@ -115,12 +109,32 @@ export default function DashboardScreen() {
 
         {/* Últimos Movimientos con Stagger */}
         <RecentTransactionsList
-          transactions={transactions}
+          transactions={accounts.length === 0 ? [] : transactions}
           selectedFilterAccountId={selectedFilterAccountId}
           selectedAccountName={selectedAccountName}
           defaultAccountId={accounts[0]?.id}
         />
-      </ScrollView>
+        </ScrollView>
+      </BlurTargetView>
+
+      {isSettingsOpen && (
+        <BackdropBlur visible={isSettingsOpen} onPress={closeSettings} blurTarget={blurTarget} />
+      )}
+
+      <View style={styles.headerOverlay} pointerEvents="box-none">
+        <DashboardHeader
+          isSettingsOpen={isSettingsOpen}
+          isDevMode={isDevMode}
+          isDark={isDark}
+          language={language}
+          toggleSettings={toggleSettings}
+          closeSettings={closeSettings}
+          toggleTheme={toggleTheme}
+          toggleLanguage={toggleLanguage}
+          handleSeedDemoData={handleSeedDemoData}
+          handleResetAllData={handleResetAllData}
+        />
+      </View>
 
       {/* Modal Registrar Movimiento */}
       <CreateTransactionModal
@@ -128,6 +142,7 @@ export default function DashboardScreen() {
         initialType={txType}
         accounts={accounts}
         categories={categories}
+        blurTarget={blurTarget}
         onClose={() => setIsTxModalVisible(false)}
         onTransactionCreated={handleDataChanged}
       />
@@ -135,6 +150,7 @@ export default function DashboardScreen() {
       {/* Modal Crear Cuenta */}
       <CreateAccountModal
         visible={isAccountModalVisible}
+        blurTarget={blurTarget}
         onClose={() => setIsAccountModalVisible(false)}
         onAccountCreated={handleDataChanged}
       />
@@ -154,5 +170,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 8,
+  },
+  blurTarget: {
+    flex: 1,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 100,
   },
 });

@@ -3,6 +3,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { Plus, Minus } from 'lucide-react-native';
 import { MotiPressable } from 'moti/interactions';
 import { useColors } from '@/components/ui/theme';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface QuickActionsGridProps {
   onOpenTransactionModal: (type: 'INCOME' | 'EXPENSE') => void;
@@ -10,6 +11,7 @@ interface QuickActionsGridProps {
 
 export function QuickActionsGrid({ onOpenTransactionModal }: QuickActionsGridProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.actionGrid}>
@@ -32,7 +34,7 @@ export function QuickActionsGrid({ onOpenTransactionModal }: QuickActionsGridPro
         <View style={styles.actionIconCircle}>
           <Plus size={20} color={colors.onSuccess} strokeWidth={2.5} />
         </View>
-        <Text style={[styles.primaryActionText, { color: colors.onSuccess }]}>Ingreso</Text>
+        <Text style={[styles.primaryActionText, { color: colors.onSuccess }]}>{t('addIncome')}</Text>
       </MotiPressable>
 
       {/* Botón Gasto */}
@@ -54,7 +56,7 @@ export function QuickActionsGrid({ onOpenTransactionModal }: QuickActionsGridPro
         <View style={styles.actionIconCircle}>
           <Minus size={20} color={colors.onError} strokeWidth={2.5} />
         </View>
-        <Text style={[styles.primaryActionText, { color: colors.onError }]}>Gasto</Text>
+        <Text style={[styles.primaryActionText, { color: colors.onError }]}>{t('addExpense')}</Text>
       </MotiPressable>
     </View>
   );
