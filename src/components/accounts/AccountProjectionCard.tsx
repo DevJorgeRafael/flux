@@ -9,6 +9,7 @@ import {
 } from '@/core/services/interest-calculator';
 import { formatCurrency } from '@/core/utils/currency';
 import { useColors } from '@/components/ui/theme';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountProjectionCardProps {
   account: Account;
@@ -16,6 +17,7 @@ interface AccountProjectionCardProps {
 
 export function AccountProjectionCard({ account }: AccountProjectionCardProps) {
   const colors = useColors();
+  const { t } = useTranslation();
   const isFlexible = account.type === 'FLEXIBLE_SAVINGS';
   const isFixed = account.type === 'FIXED_TERM';
 
@@ -54,9 +56,9 @@ export function AccountProjectionCard({ account }: AccountProjectionCardProps) {
           )}
         </View>
         <View style={styles.headerCopy}>
-          <Text style={[styles.title, { color: colors.text }]}>Proyección de Rendimiento</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('projection')}</Text>
           <Text style={[styles.subtitle, { color: colors.textLight }]}>
-            Estimación sin considerar movimientos futuros
+            {t('projectionDisclaimer')}
           </Text>
         </View>
       </View>
@@ -70,12 +72,12 @@ export function AccountProjectionCard({ account }: AccountProjectionCardProps) {
 
       <View style={styles.metricsRow}>
         <View style={styles.metric}>
-          <Text style={[styles.label, { color: colors.textLight }]}>Generación mensual</Text>
+          <Text style={[styles.label, { color: colors.textLight }]}>{t('monthlyGeneration')}</Text>
           <Text style={[styles.value, { color: colors.text }]}>{formatCurrency(monthlyGain)}</Text>
         </View>
         <View style={styles.metric}>
           <Text style={[styles.label, { color: colors.textLight }]}>
-            {isFixed ? 'Monto al vencimiento' : 'Monto estimado en 1 año'}
+            {isFixed ? t('maturityAmount') : t('estimatedYearAmount')}
           </Text>
           <Text style={[styles.value, { color: colors.primaryText }]}>
             {formatCurrency(fixedMaturity ?? flexibleYearEnd)}
@@ -85,8 +87,8 @@ export function AccountProjectionCard({ account }: AccountProjectionCardProps) {
 
       <Text style={[styles.note, { color: colors.textLight }]}>
         {isFixed
-          ? 'Interés simple calculado sobre el capital original.'
-          : `Interés compuesto diario. Rendimiento acumulado estimado: ${formatCurrency(
+          ? t('simpleInterestCapital')
+          : `${t('accumulatedReturn')} ${formatCurrency(
               flexibleYearEnd - account.balance
             )}.`}
       </Text>

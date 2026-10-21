@@ -11,6 +11,7 @@ import { Account } from '@/core/models/account';
 import { useColors } from '@/components/ui/theme';
 import { formatCurrency } from '@/core/utils/currency';
 import { AccountCard } from './AccountCard';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountCarouselProps {
   accounts: Account[];
@@ -28,13 +29,14 @@ export function AccountCarousel({
   onOpenCreateAccountModal,
 }: AccountCarouselProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   return (
     <>
       {/* Sección Cuentas Cabecera */}
       <View style={styles.sectionHeaderRow}>
         <View style={styles.titleWithBadge}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Mis Cuentas</Text>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>{t('accounts')}</Text>
           <View style={[styles.counterBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.counterBadgeText, { color: colors.textLight }]}>{accounts.length}</Text>
           </View>
@@ -48,7 +50,7 @@ export function AccountCarousel({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Plus size={15} color={colors.primaryText} strokeWidth={2.5} />
-          <Text style={[styles.addAccountHeaderText, { color: colors.primaryText }]}>Nueva Cuenta</Text>
+          <Text style={[styles.addAccountHeaderText, { color: colors.primaryText }]}>{t('newAccount')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -57,9 +59,9 @@ export function AccountCarousel({
           <View style={{ marginBottom: 12 }}>
             <CreditCard size={36} color={colors.textLight} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.emptyHeading, { color: colors.text }]}>Sin cuentas registradas</Text>
+          <Text style={[styles.emptyHeading, { color: colors.text }]}>{t('noAccounts')}</Text>
           <Text style={[styles.emptySubtext, { color: colors.textLight }]}>
-            Crea tu primera cuenta corriente, fondo flexible o plazo fijo para comenzar a gestionar tus finanzas.
+            {t('createFirstAccount')}
           </Text>
           <TouchableOpacity
             style={[styles.createAccountPrimaryBtn, { backgroundColor: colors.primary }]}
@@ -68,7 +70,7 @@ export function AccountCarousel({
           >
             <Plus size={18} color={colors.onPrimary} strokeWidth={2.5} />
             <Text style={[styles.createAccountPrimaryBtnText, { color: colors.onPrimary }]}>
-              Crear mi primera cuenta
+              {t('createFirstAccount')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -92,7 +94,9 @@ export function AccountCarousel({
             activeOpacity={0.8}
           >
             <View style={styles.accountCardHeader}>
-              <Text style={[styles.accountTypeHeader, { color: colors.textLight }]}>VISTA GLOBAL</Text>
+              <Text style={[styles.accountTypeHeader, { color: colors.textLight }]}>
+                {t('allAccounts').toUpperCase()}
+              </Text>
               <View
                 style={[
                   styles.tnaBadge,
@@ -111,7 +115,7 @@ export function AccountCarousel({
                     },
                   ]}
                 >
-                  {selectedFilterAccountId === null ? 'Activo' : 'Todas'}
+                  {selectedFilterAccountId === null ? t('active') : t('allAccounts')}
                 </Text>
               </View>
             </View>
@@ -119,7 +123,7 @@ export function AccountCarousel({
             <View style={styles.accountCardTitleRow}>
               <Layers size={16} color={colors.text} />
               <Text style={[styles.accountCardTitle, { color: colors.text, marginBottom: 0 }]} numberOfLines={1}>
-                Todas las Cuentas
+                {t('allAccounts')}
               </Text>
             </View>
 
@@ -145,7 +149,7 @@ export function AccountCarousel({
                   },
                 ]}
               >
-                {selectedFilterAccountId === null ? 'Mostrando todo' : 'Toca para ver todo'}
+                {selectedFilterAccountId === null ? t('showingAll') : t('tapToShowAll')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -172,9 +176,9 @@ export function AccountCarousel({
             <View style={[styles.addAccountIconCircle, { backgroundColor: colors.primarySoft }]}>
               <Plus size={20} color={colors.primaryText} strokeWidth={2.5} />
             </View>
-            <Text style={[styles.addAccountDashedTitle, { color: colors.text }]}>Nueva Cuenta</Text>
+            <Text style={[styles.addAccountDashedTitle, { color: colors.text }]}>{t('newAccount')}</Text>
             <Text style={[styles.addAccountDashedSubtext, { color: colors.textLight }]}>
-              Añadir otra
+              {t('addAnother')}
             </Text>
           </TouchableOpacity>
         </ScrollView>

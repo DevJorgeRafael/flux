@@ -4,6 +4,7 @@ import { Zap, Calendar } from 'lucide-react-native';
 import { Account, AccountType } from '@/core/models/account';
 import { useColors } from '@/components/ui/theme';
 import { formatCurrency } from '@/core/utils/currency';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountCardProps {
   account: Account;
@@ -11,21 +12,21 @@ interface AccountCardProps {
   onPress: () => void;
 }
 
-const getAccountTypeLabel = (type: AccountType) => {
-  switch (type) {
-    case 'CHECKING':
-      return 'Cuenta Corriente';
-    case 'FLEXIBLE_SAVINGS':
-      return 'Fondo Flexible';
-    case 'FIXED_TERM':
-      return 'Plazo Fijo';
-    default:
-      return 'Cuenta';
-  }
-};
-
 export function AccountCard({ account, isSelected, onPress }: AccountCardProps) {
   const colors = useColors();
+  const { t } = useTranslation();
+  const getAccountTypeLabel = (type: AccountType) => {
+    switch (type) {
+      case 'CHECKING':
+        return t('account');
+      case 'FLEXIBLE_SAVINGS':
+        return t('flexible');
+      case 'FIXED_TERM':
+        return t('fixedTerm');
+      default:
+        return t('account');
+    }
+  };
   const isFlexible = account.type === 'FLEXIBLE_SAVINGS';
   const isFixed = account.type === 'FIXED_TERM';
 
@@ -49,7 +50,7 @@ export function AccountCard({ account, isSelected, onPress }: AccountCardProps) 
 
         {isSelected ? (
           <View style={[styles.tnaBadge, { backgroundColor: colors.primarySoft }]}>
-            <Text style={[styles.tnaBadgeText, { color: colors.primaryText }]}>Filtrando</Text>
+            <Text style={[styles.tnaBadgeText, { color: colors.primaryText }]}>{t('filtering')}</Text>
           </View>
         ) : isFlexible && account.annualRate ? (
           <View style={[styles.tnaBadge, { backgroundColor: colors.primarySoft }]}>
@@ -59,7 +60,7 @@ export function AccountCard({ account, isSelected, onPress }: AccountCardProps) 
           </View>
         ) : isFixed ? (
           <View style={[styles.fixedBadge, { backgroundColor: colors.warningSoft }]}>
-            <Text style={[styles.fixedBadgeText, { color: colors.warningText }]}>Plazo Fijo</Text>
+            <Text style={[styles.fixedBadgeText, { color: colors.warningText }]}>{t('fixedTerm')}</Text>
           </View>
         ) : null}
       </View>
@@ -81,7 +82,7 @@ export function AccountCard({ account, isSelected, onPress }: AccountCardProps) 
         >
           <Zap size={13} color={colors.successText} strokeWidth={2.5} />
           <Text style={[styles.yieldHighlightText, { color: colors.successText }]}>
-            Rendimiento diario activo
+            {t('activeDailyYield')}
           </Text>
         </View>
       )}
@@ -95,7 +96,7 @@ export function AccountCard({ account, isSelected, onPress }: AccountCardProps) 
         >
           <Calendar size={12} color={colors.textLight} strokeWidth={2} />
           <Text style={[styles.fixedDateText, { color: colors.textLight }]}>
-            Vence: {account.fixedTermDeposits[0].maturityDate}
+            {t('due')}: {account.fixedTermDeposits[0].maturityDate}
           </Text>
         </View>
       )}

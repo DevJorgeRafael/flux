@@ -5,6 +5,7 @@ import { Receipt, Plus, Minus } from 'lucide-react-native';
 import { Transaction } from '@/core/models/transaction';
 import { useColors } from '@/components/ui/theme';
 import { formatCurrency } from '@/core/utils/currency';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountTransactionsListProps {
   transactions: Transaction[];
@@ -15,6 +16,7 @@ type FilterType = 'ALL' | 'INCOME' | 'EXPENSE';
 export function AccountTransactionsList({ transactions }: AccountTransactionsListProps) {
   const [filterType, setFilterType] = useState<FilterType>('ALL');
   const colors = useColors();
+  const { t } = useTranslation();
 
   const filteredTransactions = transactions.filter((tx) => {
     if (filterType === 'ALL') return true;
@@ -25,7 +27,7 @@ export function AccountTransactionsList({ transactions }: AccountTransactionsLis
     <>
       {/* HISTORIAL COMPLETO DE MOVIMIENTOS */}
       <View style={styles.historySectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Historial de Movimientos</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('movementHistory')}</Text>
         <Text style={[styles.historyCountText, { color: colors.textLight }]}>
           {filteredTransactions.length} {filteredTransactions.length === 1 ? 'movimiento' : 'movimientos'}
         </Text>
@@ -103,10 +105,10 @@ export function AccountTransactionsList({ transactions }: AccountTransactionsLis
           <View style={{ marginBottom: 12 }}>
             <Receipt size={32} color={colors.textLight} strokeWidth={1.5} />
           </View>
-          <Text style={[styles.emptyHeading, { color: colors.text }]}>No hay movimientos registrados</Text>
+          <Text style={[styles.emptyHeading, { color: colors.text }]}>{t('noMovements')}</Text>
           <Text style={[styles.emptySubtext, { color: colors.textLight }]}>
             {filterType === 'ALL'
-              ? 'Esta cuenta aún no tiene transacciones registradas.'
+              ? t('noAccountMovements')
               : 'No se encontraron movimientos con el filtro seleccionado.'}
           </Text>
         </View>
