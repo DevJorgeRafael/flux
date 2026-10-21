@@ -18,6 +18,7 @@ import { AccountCarousel } from '@/components/dashboard/AccountCarousel';
 import { RecentTransactionsList } from '@/components/dashboard/RecentTransactionsList';
 import { CreateAccountModal } from '@/components/dashboard/CreateAccountModal';
 import { CreateTransactionModal } from '@/components/dashboard/CreateTransactionModal';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 export default function DashboardScreen() {
   const colors = useColors();
@@ -53,6 +54,7 @@ export default function DashboardScreen() {
     toggleSettings,
     closeSettings,
   } = useThemeDropdown();
+  const { language, toggleLanguage } = useTranslation();
 
   // Modal UI States
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
@@ -84,9 +86,11 @@ export default function DashboardScreen() {
         isSettingsOpen={isSettingsOpen}
         isDevMode={isDevMode}
         isDark={isDark}
+        language={language}
         toggleSettings={toggleSettings}
         closeSettings={closeSettings}
         toggleTheme={toggleTheme}
+        toggleLanguage={toggleLanguage}
         handleSeedDemoData={handleSeedDemoData}
         handleResetAllData={handleResetAllData}
       />

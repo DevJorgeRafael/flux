@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AccountType } from '@/core/models/account';
 import { formatCurrency } from '@/core/utils/currency';
 import { useColors } from '@/components/ui/theme';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountProjectionPreviewProps {
   accountType: AccountType;
@@ -16,6 +17,7 @@ export function AccountProjectionPreview({
   finalAmount,
 }: AccountProjectionPreviewProps) {
   const colors = useColors();
+  const { t } = useTranslation();
   const isFixed = accountType === 'FIXED_TERM';
 
   return (
@@ -28,19 +30,19 @@ export function AccountProjectionPreview({
         },
       ]}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Vista previa del rendimiento</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t('previewYield')}</Text>
       <View style={styles.row}>
-        <Text style={[styles.label, { color: colors.textLight }]}>Tasa aplicada</Text>
+        <Text style={[styles.label, { color: colors.textLight }]}>{t('appliedRate')}</Text>
         <Text style={[styles.value, { color: colors.text }]}>{rate.toFixed(2)}% TNA</Text>
       </View>
       <View style={styles.row}>
-        <Text style={[styles.label, { color: colors.textLight }]}>Monto estimado al final</Text>
+        <Text style={[styles.label, { color: colors.textLight }]}>{t('estimatedFinalAmount')}</Text>
         <Text style={[styles.value, { color: colors.primaryText }]}>{formatCurrency(finalAmount)}</Text>
       </View>
       <Text style={[styles.hint, { color: colors.textLight }]}>
         {isFixed
-          ? 'Interés simple según el plazo seleccionado.'
-          : 'Interés compuesto diario estimado durante un año.'}
+          ? t('simpleInterestHint')
+          : t('compoundInterestHint')}
       </Text>
     </View>
   );

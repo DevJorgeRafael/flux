@@ -4,6 +4,7 @@ import { Plus, Minus, Zap, TrendingUp, Clock, Calendar } from 'lucide-react-nati
 import { Account, AccountType } from '@/core/models/account';
 import { useColors } from '@/components/ui/theme';
 import { formatCurrency } from '@/core/utils/currency';
+import { useTranslation } from '@/core/i18n/useTranslation';
 
 interface AccountDetailHeroProps {
   account: Account;
@@ -13,17 +14,18 @@ interface AccountDetailHeroProps {
 
 export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailHeroProps) {
   const colors = useColors();
+  const { t } = useTranslation();
 
   const getAccountTypeLabel = (type: AccountType) => {
     switch (type) {
       case 'CHECKING':
-        return 'Cuenta Corriente';
+        return t('checking');
       case 'FLEXIBLE_SAVINGS':
-        return 'Fondo Remunerado Flexible';
+        return t('flexible');
       case 'FIXED_TERM':
-        return 'Depósito a Plazo Fijo';
+        return t('fixedDeposit');
       default:
-        return 'Cuenta';
+        return t('account');
     }
   };
 
@@ -49,7 +51,7 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
 
           {isFixed && (
             <View style={[styles.rateBadge, { backgroundColor: colors.warningSoft }]}>
-              <Text style={[styles.rateBadgeText, { color: colors.warningText }]}>Inversión a Plazo</Text>
+              <Text style={[styles.rateBadgeText, { color: colors.warningText }]}>{t('termInvestment')}</Text>
             </View>
           )}
         </View>
@@ -66,7 +68,7 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
               <Plus size={12} color={colors.successText} strokeWidth={3} />
             </View>
             <View>
-              <Text style={[styles.flowLabel, { color: colors.textLight }]}>Total Ingresado</Text>
+              <Text style={[styles.flowLabel, { color: colors.textLight }]}>{t('totalIncome')}</Text>
               <Text style={[styles.flowValue, { color: colors.successText }]}>
                 {formatCurrency(totalIn)}
               </Text>
@@ -80,7 +82,7 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
               <Minus size={12} color={colors.errorText} strokeWidth={3} />
             </View>
             <View>
-              <Text style={[styles.flowLabel, { color: colors.textLight }]}>Total Gastado</Text>
+              <Text style={[styles.flowLabel, { color: colors.textLight }]}>{t('totalSpent')}</Text>
               <Text style={[styles.flowValue, { color: colors.errorText }]}>
                 {formatCurrency(totalOut)}
               </Text>
@@ -97,7 +99,7 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
               <Zap size={18} color={colors.successText} strokeWidth={2.5} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.yieldTitle, { color: colors.text }]}>Rendimiento Activo Diario</Text>
+              <Text style={[styles.yieldTitle, { color: colors.text }]}>{t('activeDailyReturn')}</Text>
               <Text style={[styles.yieldSubtitle, { color: colors.textLight }]}>
                 Generando intereses compuestos en base al saldo
               </Text>
@@ -106,21 +108,21 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
 
           <View style={[styles.yieldStatsRow, { borderTopColor: colors.border }]}>
             <View style={styles.yieldStatCol}>
-              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>TNA Anual</Text>
+              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>TNA {t('annual')}</Text>
               <Text style={[styles.yieldStatNumber, { color: colors.text }]}>
                 {(account.annualRate * 100).toFixed(2)}%
               </Text>
             </View>
 
             <View style={styles.yieldStatCol}>
-              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>Rendimiento Diario Est.</Text>
+              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>{t('dailyEstimated')}</Text>
               <Text style={[styles.yieldStatNumber, { color: colors.successText }]}>
                 +{formatCurrency((account.balance * account.annualRate) / 365)}
               </Text>
             </View>
 
             <View style={styles.yieldStatCol}>
-              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>Mensual Est.</Text>
+              <Text style={[styles.yieldStatLabel, { color: colors.textLight }]}>{t('monthlyEstimated')}</Text>
               <Text style={[styles.yieldStatNumber, { color: colors.primaryText }]}>
                 +{formatCurrency((account.balance * account.annualRate) / 12)}
               </Text>

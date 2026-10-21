@@ -5,7 +5,7 @@ export function useThemeDropdown() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { isDark, toggleTheme } = useThemeMode();
 
-  const isDevMode = process.env.EXPO_PUBLIC_ENV !== 'prod';
+  const isDevMode = __DEV__;
 
   const toggleSettings = useCallback(() => {
     setIsSettingsOpen((prev) => !prev);
