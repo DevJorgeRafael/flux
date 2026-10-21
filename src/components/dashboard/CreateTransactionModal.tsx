@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -48,7 +48,6 @@ export function CreateTransactionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [prevVisible, setPrevVisible] = useState(visible);
-
   if (visible !== prevVisible) {
     setPrevVisible(visible);
     if (visible) {
@@ -58,6 +57,39 @@ export function CreateTransactionModal({
       }
     }
   }
+
+  // Control de animación entrada/salida
+  const [isRendered, setIsRendered] = useState(false);
+  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (visible) {
+        if (!cancelled) setIsRendered(true);
+        await new Promise<void>((resolve) => setTimeout(resolve, 16));
+        if (!cancelled) setIsAnimatingIn(true);
+      } else {
+        if (!cancelled) setIsAnimatingIn(false);
+        closeTimeoutRef.current = setTimeout(() => {
+          if (!cancelled) setIsRendered(false);
+        }, 250);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, [visible]);
+
+  const handleClose = () => {
+    setIsAnimatingIn(false);
+    setTimeout(() => {
+      onClose();
+    }, 210);
+  };
 
   const resetForm = () => {
     setTxAmount('');
@@ -102,7 +134,7 @@ export function CreateTransactionModal({
       });
 
       resetForm();
-      onClose();
+      handleClose();
       onTransactionCreated();
     } catch (err: unknown) {
       console.error('Error creating transaction:', err);
@@ -112,40 +144,44 @@ export function CreateTransactionModal({
     }
   };
 
+  if (!isRendered) return null;
+
   return (
     <Modal
-      visible={visible}
+      visible={isRendered}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalBackdrop}>
-        {/* Backdrop animado con timing limpio */}
-        <MotiView
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: 'timing', duration: 200 }}
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </MotiView>
+      {/* Backdrop con fade timing */}
+      <MotiView
+        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
+        transition={{ type: 'timing', duration: 200 }}
+        style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
+        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+      </MotiView>
 
-        {/* Sheet animado con la misma animación limpia y concreta (timing 200ms) */}
+      {/* Sheet — slide up/down sin layout animation */}
+      <View style={styles.modalBackdrop} pointerEvents="box-none">
         <MotiView
-          from={{ translateY: 350, opacity: 0 }}
-          animate={{ translateY: 0, opacity: 1 }}
-          transition={{ type: 'timing', duration: 200 }}
+          animate={{
+            translateY: isAnimatingIn ? 0 : 400,
+            opacity: isAnimatingIn ? 1 : 0,
+          }}
+          transition={{ type: 'timing', duration: 220 }}
           style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
         >
           <View style={styles.modalTopBar}>
             <Text style={[styles.modalHeading, { color: colors.text }]}>
               {txType === 'INCOME' ? 'Registrar Ingreso' : 'Registrar Gasto'}
             </Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <X size={22} color={colors.textLight} strokeWidth={2} />
             </TouchableOpacity>
           </View>
@@ -331,7 +367,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalHeading: {
     fontSize: 20,
@@ -339,19 +375,20 @@ const styles = StyleSheet.create({
   },
   typeSegmentedControl: {
     flexDirection: 'row',
-    padding: 5,
     borderRadius: 14,
     borderWidth: 1,
+    padding: 4,
     marginBottom: 18,
   },
   typeSegmentOption: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
+    borderRadius: 10,
   },
   typeSegmentText: {
-    fontWeight: '800',
     fontSize: 14,
+    fontWeight: '700',
   },
   formLabel: {
     fontSize: 12,
@@ -363,10 +400,11 @@ const styles = StyleSheet.create({
   largeAmountInput: {
     borderWidth: 1,
     borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    fontSize: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 28,
     fontWeight: '800',
+    textAlign: 'center',
   },
   standardInput: {
     borderWidth: 1,
@@ -374,25 +412,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   selectionChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
     marginRight: 8,
   },
   selectionChipText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
   },
   submitTransactionButton: {
-    marginTop: 22,
-    height: 54,
-    borderRadius: 16,
+    borderRadius: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 20,
   },
   submitTransactionButtonText: {
     color: '#fff',

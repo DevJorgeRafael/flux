@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,8 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { X, CreditCard, TrendingUp, Calendar } from 'lucide-react-native';
-import { MotiView, AnimatePresence } from 'moti';
-import { LinearTransition, Easing } from 'react-native-reanimated';
+import { MotiView } from 'moti';
+import Animated, { LinearTransition, FadeIn, Easing } from 'react-native-reanimated';
 import { AccountType } from '@/core/models/account';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteAccountRepository } from '@/infrastructure/repositories';
@@ -35,6 +35,42 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
   const [accTNA, setAccTNA] = useState('');
   const [accTermMonths, setAccTermMonths] = useState('3');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+
+  // Control interno para animar entrada y salida del modal
+  const [isRendered, setIsRendered] = useState(false);
+  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (visible) {
+        if (!cancelled) setIsRendered(true);
+        // Esperar dos frames para que React haga commit del estado inicial (off-screen)
+        // antes de que Moti inicie la transición
+        await new Promise<void>((resolve) => setTimeout(resolve, 16));
+        if (!cancelled) setIsAnimatingIn(true);
+      } else {
+        if (!cancelled) setIsAnimatingIn(false);
+        closeTimeoutRef.current = setTimeout(() => {
+          if (!cancelled) setIsRendered(false);
+        }, 250);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, [visible]);
+
+  const handleClose = () => {
+    // Dispara la animación de salida, luego llama onClose
+    setIsAnimatingIn(false);
+    setTimeout(() => {
+      onClose();
+    }, 210);
+  };
 
   const resetForm = () => {
     setAccName('');
@@ -75,7 +111,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       });
 
       resetForm();
-      onClose();
+      handleClose();
       onAccountCreated();
     } catch (err) {
       console.error('Error creating account:', err);
@@ -85,34 +121,38 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
     }
   };
 
+  if (!isRendered) return null;
+
   return (
     <Modal
-      visible={visible}
+      visible={isRendered}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalBackdrop}>
-        {/* Backdrop animado con timing limpio */}
-        <MotiView
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: 'timing', duration: 200 }}
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </MotiView>
+      {/* Backdrop con fade */}
+      <MotiView
+        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
+        transition={{ type: 'timing', duration: 200 }}
+        style={[StyleSheet.absoluteFill, styles.backdrop, { backgroundColor: colors.overlay }]}
+        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+      </MotiView>
 
-        {/* Sheet animado con la misma animación limpia y concreta de settings (timing 200ms) */}
+      {/* Sheet — solo slide up/down, sin layout animation ni Reanimated */}
+      <View style={styles.modalBackdrop} pointerEvents="box-none">
         <MotiView
-          from={{ translateY: 350, opacity: 0 }}
-          animate={{ translateY: 0, opacity: 1 }}
-          transition={{ type: 'timing', duration: 200 }}
-          layout={LinearTransition.duration(200).easing(Easing.out(Easing.cubic))}
+          animate={{
+            translateY: isAnimatingIn ? 0 : 400,
+            opacity: isAnimatingIn ? 1 : 0,
+          }}
+          transition={{ type: 'timing', duration: 220 }}
+          layout={LinearTransition.duration(200).easing(Easing.out(Easing.quad))}
           style={[
             styles.modalSheet,
             { backgroundColor: colors.surface, paddingBottom: insets.bottom + 20, maxHeight: '88%' },
@@ -120,185 +160,167 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
         >
           <View style={styles.modalTopBar}>
             <Text style={[styles.modalHeading, { color: colors.text }]}>Nueva Cuenta</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <X size={22} color={colors.textLight} strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
-            <View>
-              {/* Selector de Tipo de Cuenta */}
-              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>Tipo de Cuenta</Text>
-              <View style={styles.accountTypeSelectorRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.accountTypeCardOption,
-                    {
-                      backgroundColor: accType === 'CHECKING' ? colors.primarySoft : colors.background,
-                      borderColor: accType === 'CHECKING' ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => setAccType('CHECKING')}
-                  activeOpacity={0.7}
-                >
-                  <CreditCard size={18} color={accType === 'CHECKING' ? colors.primaryText : colors.textLight} />
-                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'CHECKING' ? colors.primaryText : colors.text }]}>
-                    Corriente
-                  </Text>
-                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Operaciones</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.accountTypeCardOption,
-                    {
-                      backgroundColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primarySoft : colors.background,
-                      borderColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => setAccType('FLEXIBLE_SAVINGS')}
-                  activeOpacity={0.7}
-                >
-                  <TrendingUp size={18} color={accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.textLight} />
-                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.text }]}>
-                    Flexible
-                  </Text>
-                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Rendimiento</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.accountTypeCardOption,
-                    {
-                      backgroundColor: accType === 'FIXED_TERM' ? colors.warningSoft : colors.background,
-                      borderColor: accType === 'FIXED_TERM' ? colors.warning : colors.border,
-                    },
-                  ]}
-                  onPress={() => setAccType('FIXED_TERM')}
-                  activeOpacity={0.7}
-                >
-                  <Calendar size={18} color={accType === 'FIXED_TERM' ? colors.warningText : colors.textLight} />
-                  <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FIXED_TERM' ? colors.warningText : colors.text }]}>
-                    Plazo Fijo
-                  </Text>
-                  <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>A término</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Nombre de la Cuenta */}
-              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Nombre de la cuenta</Text>
-              <TextInput
-                style={[
-                  styles.formTextInput,
-                  { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
-                ]}
-                placeholder="Ej. Billetera Digital, Personal, Ahorros"
-                placeholderTextColor={colors.textLight}
-                value={accName}
-                onChangeText={setAccName}
-              />
-
-              {/* Saldo Inicial / Capital */}
-              <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-                {accType === 'FIXED_TERM' ? 'Capital a Invertir ($)' : 'Saldo Inicial ($)'}
-              </Text>
-              <TextInput
-                style={[
-                  styles.formTextInput,
-                  { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
-                ]}
-                placeholder="0.00"
-                placeholderTextColor={colors.textLight}
-                keyboardType="decimal-pad"
-                value={accBalance}
-                onChangeText={setAccBalance}
-              />
-
-              {/* Tasa Nominal Anual si es Flexible o Plazo Fijo */}
-              <AnimatePresence>
-                {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
-                  <MotiView
-                    from={{ opacity: 0, translateY: -10 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    exit={{ opacity: 0, translateY: -10 }}
-                    transition={{ type: 'timing', duration: 200 }}
-                  >
-                    <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-                      Tasa Nominal Anual (TNA %)
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.formTextInput,
-                        { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
-                      ]}
-                      placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
-                      placeholderTextColor={colors.textLight}
-                      keyboardType="decimal-pad"
-                      value={accTNA}
-                      onChangeText={setAccTNA}
-                    />
-                  </MotiView>
-                )}
-              </AnimatePresence>
-
-              {/* Plazo en Meses si es Plazo Fijo */}
-              <AnimatePresence>
-                {accType === 'FIXED_TERM' && (
-                  <MotiView
-                    from={{ opacity: 0, translateY: -10 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    exit={{ opacity: 0, translateY: -10 }}
-                    transition={{ type: 'timing', duration: 200 }}
-                  >
-                    <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
-                      Plazo de vencimiento
-                    </Text>
-                    <View style={styles.termMonthsRow}>
-                      {['1', '3', '6', '12'].map((m) => (
-                        <TouchableOpacity
-                          key={m}
-                          style={[
-                            styles.termMonthPill,
-                            {
-                              backgroundColor: accTermMonths === m ? colors.primary : colors.inputBackground,
-                              borderColor: accTermMonths === m ? colors.primary : colors.border,
-                            },
-                          ]}
-                          onPress={() => setAccTermMonths(m)}
-                        >
-                          <Text
-                            style={[
-                              styles.termMonthPillText,
-                              { color: accTermMonths === m ? colors.onPrimary : colors.text },
-                            ]}
-                          >
-                            {m} {m === '1' ? 'mes' : 'meses'}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </MotiView>
-                )}
-              </AnimatePresence>
-
-              {/* Botón Crear Cuenta */}
+            {/* Selector de Tipo de Cuenta */}
+            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 4 }]}>Tipo de Cuenta</Text>
+            <View style={styles.accountTypeSelectorRow}>
               <TouchableOpacity
                 style={[
-                  styles.submitTransactionButton,
-                  { backgroundColor: colors.primary, marginTop: 24, opacity: isCreatingAccount ? 0.7 : 1 },
+                  styles.accountTypeCardOption,
+                  {
+                    backgroundColor: accType === 'CHECKING' ? colors.primarySoft : colors.background,
+                    borderColor: accType === 'CHECKING' ? colors.primary : colors.border,
+                  },
                 ]}
-                onPress={handleCreate}
-                disabled={isCreatingAccount}
+                onPress={() => setAccType('CHECKING')}
+                activeOpacity={0.7}
               >
-                {isCreatingAccount ? (
-                  <ActivityIndicator color={colors.onPrimary} />
-                ) : (
-                  <Text style={[styles.submitTransactionButtonText, { color: colors.onPrimary }]}>
-                    Crear Cuenta
-                  </Text>
-                )}
+                <CreditCard size={18} color={accType === 'CHECKING' ? colors.primaryText : colors.textLight} />
+                <Text style={[styles.accountTypeOptionTitle, { color: accType === 'CHECKING' ? colors.primaryText : colors.text }]}>
+                  Corriente
+                </Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Operaciones</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.accountTypeCardOption,
+                  {
+                    backgroundColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primarySoft : colors.background,
+                    borderColor: accType === 'FLEXIBLE_SAVINGS' ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setAccType('FLEXIBLE_SAVINGS')}
+                activeOpacity={0.7}
+              >
+                <TrendingUp size={18} color={accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.textLight} />
+                <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FLEXIBLE_SAVINGS' ? colors.primaryText : colors.text }]}>
+                  Flexible
+                </Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>Rendimiento</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.accountTypeCardOption,
+                  {
+                    backgroundColor: accType === 'FIXED_TERM' ? colors.warningSoft : colors.background,
+                    borderColor: accType === 'FIXED_TERM' ? colors.warning : colors.border,
+                  },
+                ]}
+                onPress={() => setAccType('FIXED_TERM')}
+                activeOpacity={0.7}
+              >
+                <Calendar size={18} color={accType === 'FIXED_TERM' ? colors.warningText : colors.textLight} />
+                <Text style={[styles.accountTypeOptionTitle, { color: accType === 'FIXED_TERM' ? colors.warningText : colors.text }]}>
+                  Plazo Fijo
+                </Text>
+                <Text style={[styles.accountTypeOptionDesc, { color: colors.textLight }]}>A término</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Nombre de la Cuenta */}
+            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Nombre de la cuenta</Text>
+            <TextInput
+              style={[
+                styles.formTextInput,
+                { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+              ]}
+              placeholder="Ej. Billetera Digital, Personal, Ahorros"
+              placeholderTextColor={colors.textLight}
+              value={accName}
+              onChangeText={setAccName}
+            />
+
+            {/* Saldo Inicial / Capital */}
+            <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+              {accType === 'FIXED_TERM' ? 'Capital a Invertir ($)' : 'Saldo Inicial ($)'}
+            </Text>
+            <TextInput
+              style={[
+                styles.formTextInput,
+                { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+              ]}
+              placeholder="0.00"
+              placeholderTextColor={colors.textLight}
+              keyboardType="decimal-pad"
+              value={accBalance}
+              onChangeText={setAccBalance}
+            />
+
+            {/* Tasa Nominal Anual con fade in */}
+            {(accType === 'FLEXIBLE_SAVINGS' || accType === 'FIXED_TERM') && (
+              <Animated.View entering={FadeIn.duration(150)}>
+                <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>
+                  Tasa Nominal Anual (TNA %)
+                </Text>
+                <TextInput
+                  style={[
+                    styles.formTextInput,
+                    { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border },
+                  ]}
+                  placeholder={accType === 'FLEXIBLE_SAVINGS' ? 'Ej. 35.0 (tasa anual estimada)' : 'Ej. 42.0'}
+                  placeholderTextColor={colors.textLight}
+                  keyboardType="decimal-pad"
+                  value={accTNA}
+                  onChangeText={setAccTNA}
+                />
+              </Animated.View>
+            )}
+
+            {/* Plazo en Meses con fade in */}
+            {accType === 'FIXED_TERM' && (
+              <Animated.View entering={FadeIn.duration(150)}>
+                <Text style={[styles.formLabel, { color: colors.textLight, marginTop: 14 }]}>Plazo de vencimiento</Text>
+                <View style={styles.termMonthsRow}>
+                  {['1', '3', '6', '12'].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.termMonthPill,
+                        {
+                          backgroundColor: accTermMonths === m ? colors.primary : colors.inputBackground,
+                          borderColor: accTermMonths === m ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setAccTermMonths(m)}
+                    >
+                      <Text
+                        style={[
+                          styles.termMonthPillText,
+                          { color: accTermMonths === m ? colors.onPrimary : colors.text },
+                        ]}
+                      >
+                        {m} {m === '1' ? 'mes' : 'meses'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Botón Crear Cuenta */}
+            <TouchableOpacity
+              style={[
+                styles.submitTransactionButton,
+                { backgroundColor: colors.primary, marginTop: 24, opacity: isCreatingAccount ? 0.7 : 1 },
+              ]}
+              onPress={handleCreate}
+              disabled={isCreatingAccount}
+            >
+              {isCreatingAccount ? (
+                <ActivityIndicator color={colors.onPrimary} />
+              ) : (
+                <Text style={[styles.submitTransactionButtonText, { color: colors.onPrimary }]}>
+                  Crear Cuenta
+                </Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
         </MotiView>
       </View>
@@ -307,6 +329,9 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    zIndex: 0,
+  },
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -378,16 +403,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   termMonthPillText: {
     fontSize: 13,
     fontWeight: '700',
   },
   submitTransactionButton: {
-    marginTop: 22,
-    height: 54,
-    borderRadius: 16,
+    borderRadius: 18,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
