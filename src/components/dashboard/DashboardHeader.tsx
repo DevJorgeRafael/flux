@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Pressable, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Sun, Moon, Settings, RotateCcw, Sparkles, Languages } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { useColors } from '@/components/ui/theme';
@@ -35,10 +35,6 @@ export function DashboardHeader({
 
   return (
     <>
-      {isSettingsOpen && (
-        <Pressable style={styles.backdropPressable} onPress={closeSettings} />
-      )}
-
       <View style={styles.topHeader}>
         <View style={styles.topHeaderSpacer} />
         <View style={styles.topHeaderActions}>
@@ -161,10 +157,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'flex-end',
     zIndex: 101,
-  },
-  backdropPressable: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 90,
   },
   settingsPopover: {
     position: 'absolute',

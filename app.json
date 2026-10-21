@@ -7,6 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "fluxbalance",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#09090b",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -34,7 +35,8 @@
         }
       ],
       "expo-sqlite",
-      "expo-localization"
+      "expo-localization",
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -18,6 +18,7 @@ import { Category } from '@/core/models/category';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteTransactionRepository } from '@/infrastructure/repositories';
 import { useTranslation } from '@/core/i18n/useTranslation';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 interface CreateTransactionModalProps {
   visible: boolean;
@@ -26,6 +27,7 @@ interface CreateTransactionModalProps {
   categories: Category[];
   onClose: () => void;
   onTransactionCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const transactionRepo = new SqliteTransactionRepository();
@@ -37,6 +39,7 @@ export function CreateTransactionModal({
   categories,
   onClose,
   onTransactionCreated,
+  blurTarget,
 }: CreateTransactionModalProps) {
   const colors = useColors();
   const insets = useInsets();
@@ -155,19 +158,7 @@ export function CreateTransactionModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      {/* Backdrop con fade timing */}
-      <MotiView
-        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
-        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-      </MotiView>
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — slide up/down sin layout animation */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
@@ -193,22 +184,6 @@ export function CreateTransactionModal({
             <TouchableOpacity
               style={[
                 styles.typeSegmentOption,
-                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
-              ]}
-              onPress={() => setTxType('EXPENSE')}
-            >
-              <Text
-                style={[
-                  styles.typeSegmentText,
-                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
-                ]}
-              >
-                {t('expense')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.typeSegmentOption,
                 txType === 'INCOME' && { backgroundColor: colors.success, borderRadius: 10 },
               ]}
               onPress={() => setTxType('INCOME')}
@@ -220,6 +195,22 @@ export function CreateTransactionModal({
                 ]}
               >
                 {t('income')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.typeSegmentOption,
+                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
+              ]}
+              onPress={() => setTxType('EXPENSE')}
+            >
+              <Text
+                style={[
+                  styles.typeSegmentText,
+                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
+                ]}
+              >
+                {t('expense')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -358,12 +349,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
+    zIndex: 1,
+    elevation: 1,
   },
   modalSheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
+    zIndex: 1,
+    elevation: 1,
   },
   modalTopBar: {
     flexDirection: 'row',

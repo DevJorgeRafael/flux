@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as SystemUI from 'expo-system-ui';
 
 import { StatusBar } from 'expo-status-bar';
-import { UIProvider, useThemeMode } from '@/components/ui/theme';
+import { UIProvider, useColors, useThemeMode } from '@/components/ui/theme';
 import { initDatabase } from '@/infrastructure/database/db';
 import { TranslationProvider } from '@/core/i18n/useTranslation';
 
@@ -21,6 +22,12 @@ function RootNavigator() {
 
 function RootWithTheme() {
   const { isDark } = useThemeMode();
+  const colors = useColors();
+
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(colors.background);
+  }, [colors.background]);
+
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -28,6 +35,7 @@ function RootWithTheme() {
         screenOptions={{
           headerShown: false,
           animation: 'fade',
+          contentStyle: { backgroundColor: colors.background },
         }}
       />
     </>

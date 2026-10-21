@@ -22,16 +22,23 @@ import {
 } from '@/core/services/interest-calculator';
 import { AccountProjectionPreview } from '@/components/dashboard/AccountProjectionPreview';
 import { useTranslation } from '@/core/i18n/useTranslation';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 interface CreateAccountModalProps {
   visible: boolean;
   onClose: () => void;
   onAccountCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const accountRepo = new SqliteAccountRepository();
 
-export function CreateAccountModal({ visible, onClose, onAccountCreated }: CreateAccountModalProps) {
+export function CreateAccountModal({
+  visible,
+  onClose,
+  onAccountCreated,
+  blurTarget,
+}: CreateAccountModalProps) {
   const colors = useColors();
   const insets = useInsets();
   const { t } = useTranslation();
@@ -157,19 +164,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       animationType="none"
       onRequestClose={handleClose}
     >
-      {/* Backdrop con fade */}
-      <MotiView
-        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        style={[StyleSheet.absoluteFill, styles.backdrop, { backgroundColor: colors.overlay }]}
-        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-      </MotiView>
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — solo slide up/down, sin layout animation ni Reanimated */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
@@ -374,12 +369,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
+    zIndex: 1,
+    elevation: 1,
   },
   modalSheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
+    zIndex: 1,
+    elevation: 1,
   },
   modalTopBar: {
     flexDirection: 'row',
