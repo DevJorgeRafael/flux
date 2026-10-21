@@ -124,9 +124,11 @@ const styles = StyleSheet.create({
   pillsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignContent: 'center',
     gap: 8,
     marginTop: 16,
     flexWrap: 'wrap',
+    minHeight: 76,
   },
   metricPill: {
     flexDirection: 'row',
