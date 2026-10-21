@@ -1,0 +1,96 @@
+import React from 'react';
+import { StyleSheet, View, Text } from 'react-native';
+import { Plus, Minus } from 'lucide-react-native';
+import { MotiPressable } from 'moti/interactions';
+import { useColors } from '@/components/ui/theme';
+
+interface QuickActionsGridProps {
+  onOpenTransactionModal: (type: 'INCOME' | 'EXPENSE') => void;
+}
+
+export function QuickActionsGrid({ onOpenTransactionModal }: QuickActionsGridProps) {
+  const colors = useColors();
+
+  return (
+    <View style={styles.actionGrid}>
+      {/* Botón Ingreso */}
+      <MotiPressable
+        containerStyle={{ flex: 1 }}
+        style={[styles.primaryActionBtn, { backgroundColor: colors.success }]}
+        animate={({ pressed }) => {
+          'worklet';
+          return {
+            scale: pressed ? 0.96 : 1,
+          };
+        }}
+        transition={{
+          type: 'timing',
+          duration: 100,
+        }}
+        onPress={() => onOpenTransactionModal('INCOME')}
+      >
+        <View style={styles.actionIconCircle}>
+          <Plus size={20} color={colors.onSuccess} strokeWidth={2.5} />
+        </View>
+        <Text style={[styles.primaryActionText, { color: colors.onSuccess }]}>Ingreso</Text>
+      </MotiPressable>
+
+      {/* Botón Gasto */}
+      <MotiPressable
+        containerStyle={{ flex: 1 }}
+        style={[styles.primaryActionBtn, { backgroundColor: colors.error }]}
+        animate={({ pressed }) => {
+          'worklet';
+          return {
+            scale: pressed ? 0.96 : 1,
+          };
+        }}
+        transition={{
+          type: 'timing',
+          duration: 100,
+        }}
+        onPress={() => onOpenTransactionModal('EXPENSE')}
+      >
+        <View style={styles.actionIconCircle}>
+          <Minus size={20} color={colors.onError} strokeWidth={2.5} />
+        </View>
+        <Text style={[styles.primaryActionText, { color: colors.onError }]}>Gasto</Text>
+      </MotiPressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  actionGrid: {
+    flexDirection: 'row',
+    gap: 14,
+    marginBottom: 28,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  actionIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryActionText: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+});
