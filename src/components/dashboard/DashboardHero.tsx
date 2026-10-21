@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { useColors } from '@/components/ui/theme';
@@ -17,6 +17,10 @@ export function DashboardHero({ totalBalance, monthlyTotals }: DashboardHeroProp
   const colors = useColors();
   const { t } = useTranslation();
 
+  const handleToggleBalanceVisibility = () => {
+    setIsBalanceVisible((visible) => !visible);
+  };
+
   return (
     <MotiView
       from={{ opacity: 0, translateY: 15 }}
@@ -28,17 +32,20 @@ export function DashboardHero({ totalBalance, monthlyTotals }: DashboardHeroProp
         <Text style={[styles.heroLabel, { color: colors.textLight }]}>
           {t('consolidatedBalance').toUpperCase()}
         </Text>
-        <TouchableOpacity
-          onPress={() => setIsBalanceVisible(!isBalanceVisible)}
-          activeOpacity={0.7}
+        <Pressable
+          style={styles.visibilityButton}
+          onPress={handleToggleBalanceVisibility}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          pointerEvents="auto"
+          accessibilityRole="button"
+          accessibilityLabel={isBalanceVisible ? 'Hide balance' : 'Show balance'}
         >
           {isBalanceVisible ? (
             <Eye size={18} color={colors.textLight} strokeWidth={2} />
           ) : (
             <EyeOff size={18} color={colors.textLight} strokeWidth={2} />
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Importe Heroico Centrado Masivo */}
@@ -86,12 +93,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 16,
     paddingBottom: 26,
+    zIndex: 1,
+    elevation: 1,
   },
   heroLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 8,
+  },
+  visibilityButton: {
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroLabel: {
     fontSize: 12,

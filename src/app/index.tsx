@@ -175,7 +175,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerOverlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 100,
     elevation: 100,
   },

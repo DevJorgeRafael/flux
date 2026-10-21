@@ -35,7 +35,7 @@ export function DashboardHeader({
 
   return (
     <>
-      <View style={styles.topHeader}>
+      <View style={styles.topHeader} pointerEvents="box-none">
         <View style={styles.topHeaderSpacer} />
         <View style={styles.topHeaderActions}>
           <TouchableOpacity
