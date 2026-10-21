@@ -184,22 +184,6 @@ export function CreateTransactionModal({
             <TouchableOpacity
               style={[
                 styles.typeSegmentOption,
-                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
-              ]}
-              onPress={() => setTxType('EXPENSE')}
-            >
-              <Text
-                style={[
-                  styles.typeSegmentText,
-                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
-                ]}
-              >
-                {t('expense')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.typeSegmentOption,
                 txType === 'INCOME' && { backgroundColor: colors.success, borderRadius: 10 },
               ]}
               onPress={() => setTxType('INCOME')}
@@ -211,6 +195,22 @@ export function CreateTransactionModal({
                 ]}
               >
                 {t('income')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.typeSegmentOption,
+                txType === 'EXPENSE' && { backgroundColor: colors.error, borderRadius: 10 },
+              ]}
+              onPress={() => setTxType('EXPENSE')}
+            >
+              <Text
+                style={[
+                  styles.typeSegmentText,
+                  { color: txType === 'EXPENSE' ? colors.onError : colors.textLight },
+                ]}
+              >
+                {t('expense')}
               </Text>
             </TouchableOpacity>
           </View>
