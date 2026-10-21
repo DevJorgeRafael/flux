@@ -111,7 +111,12 @@ export class SqliteAccountRepository implements IAccountRepository {
     const db = await getDatabase();
     const id = `acc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
-    const balance = data.initialBalance ?? 0;
+    // A fixed-term account gets its initial balance when the deposit is added
+    // below, so do not count the same principal as the account's opening balance.
+    const balance =
+      data.type === 'FIXED_TERM' && data.initialFixedTermDeposit
+        ? 0
+        : data.initialBalance ?? 0;
     const currency = data.currency ?? 'USD';
 
     if (typeof data.annualRate === 'number') {

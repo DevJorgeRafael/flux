@@ -150,7 +150,7 @@ export function AccountDetailHero({ account, totalIn, totalOut }: AccountDetailH
                 </View>
                 <View style={[styles.depositBadge, { backgroundColor: colors.warningSoft }]}>
                   <Text style={[styles.depositBadgeText, { color: colors.warningText }]}>
-                    {(dep.annualRate * 100).toFixed(1)}% TNA
+                    {(dep.annualRate * 100).toFixed(2)}% TNA
                   </Text>
                 </View>
               </View>
