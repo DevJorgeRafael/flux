@@ -109,7 +109,7 @@ export default function DashboardScreen() {
 
         {/* Últimos Movimientos con Stagger */}
         <RecentTransactionsList
-          transactions={transactions}
+          transactions={accounts.length === 0 ? [] : transactions}
           selectedFilterAccountId={selectedFilterAccountId}
           selectedAccountName={selectedAccountName}
           defaultAccountId={accounts[0]?.id}

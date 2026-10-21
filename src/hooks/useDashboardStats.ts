@@ -101,23 +101,29 @@ export function useDashboardStats() {
       const accFixedId = 'demo-acc-3';
 
       await db.runAsync(
-        'INSERT OR REPLACE INTO accounts (id, name, type, balance, annualRate, created_at) VALUES (?, ?, ?, ?, ?, ?);',
-        [accCheckingId, 'Cuenta Sueldo (Galicia)', 'CHECKING', 1250000, null, new Date().toISOString()]
+        `INSERT OR REPLACE INTO accounts
+         (id, name, type, balance, currency, annual_rate, is_archived, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'USD', ?, 0, ?, ?);`,
+        [accCheckingId, 'Cuenta Sueldo (Galicia)', 'CHECKING', 1250000, null, new Date().toISOString(), new Date().toISOString()]
       );
 
       await db.runAsync(
-        'INSERT OR REPLACE INTO accounts (id, name, type, balance, annualRate, created_at) VALUES (?, ?, ?, ?, ?, ?);',
-        [accYieldId, 'Fondo MercadoPago', 'FLEXIBLE_SAVINGS', 380450, 0.375, new Date().toISOString()]
+        `INSERT OR REPLACE INTO accounts
+         (id, name, type, balance, currency, annual_rate, is_archived, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'USD', ?, 0, ?, ?);`,
+        [accYieldId, 'Fondo MercadoPago', 'FLEXIBLE_SAVINGS', 380450, 0.375, new Date().toISOString(), new Date().toISOString()]
       );
 
       await db.runAsync(
-        'INSERT OR REPLACE INTO accounts (id, name, type, balance, annualRate, created_at) VALUES (?, ?, ?, ?, ?, ?);',
-        [accFixedId, 'Plazo Fijo UVA 90d', 'FIXED_TERM', 500000, 0.42, new Date().toISOString()]
+        `INSERT OR REPLACE INTO accounts
+         (id, name, type, balance, currency, annual_rate, is_archived, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'USD', ?, 0, ?, ?);`,
+        [accFixedId, 'Plazo Fijo UVA 90d', 'FIXED_TERM', 500000, 0.42, new Date().toISOString(), new Date().toISOString()]
       );
 
       await db.runAsync('DELETE FROM fixed_term_deposits WHERE account_id = ?;', [accFixedId]);
       await db.runAsync(
-        `INSERT INTO fixed_term_deposits (id, account_id, initial_amount, annual_rate, term_months, start_date, maturity_date, status)
+        `INSERT INTO fixed_term_deposits (id, account_id, principal_amount, annual_rate, term_months, start_date, maturity_date, status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           'demo-dep-1',
@@ -133,23 +139,23 @@ export function useDashboardStats() {
 
       const txDate = new Date().toISOString();
       await db.runAsync(
-        'INSERT OR REPLACE INTO transactions (id, type, date, totalAmount, description, categoryId) VALUES (?, ?, ?, ?, ?, ?);',
-        ['demo-tx-1', 'INCOME', txDate, 1250000, 'Acreditación Haberes', 'cat-1']
+        'INSERT OR REPLACE INTO transactions (id, type, total_amount, description, date, created_at) VALUES (?, ?, ?, ?, ?, ?);',
+        ['demo-tx-1', 'INCOME', 1250000, 'Acreditación Haberes', txDate, txDate]
       );
-      await db.runAsync('DELETE FROM transaction_splits WHERE transactionId = ?;', ['demo-tx-1']);
+      await db.runAsync('DELETE FROM transaction_splits WHERE transaction_id = ?;', ['demo-tx-1']);
       await db.runAsync(
-        'INSERT INTO transaction_splits (id, transactionId, accountId, amount) VALUES (?, ?, ?, ?);',
-        ['demo-split-1', 'demo-tx-1', accCheckingId, 1250000]
+        'INSERT INTO transaction_splits (id, transaction_id, account_id, category_id, amount) VALUES (?, ?, ?, ?, ?);',
+        ['demo-split-1', 'demo-tx-1', accCheckingId, 'cat_inc_salary', 1250000]
       );
 
       await db.runAsync(
-        'INSERT OR REPLACE INTO transactions (id, type, date, totalAmount, description, categoryId) VALUES (?, ?, ?, ?, ?, ?);',
-        ['demo-tx-2', 'EXPENSE', txDate, 84500, 'Supermercado Coto', 'cat-4']
+        'INSERT OR REPLACE INTO transactions (id, type, total_amount, description, date, created_at) VALUES (?, ?, ?, ?, ?, ?);',
+        ['demo-tx-2', 'EXPENSE', 84500, 'Supermercado Coto', txDate, txDate]
       );
-      await db.runAsync('DELETE FROM transaction_splits WHERE transactionId = ?;', ['demo-tx-2']);
+      await db.runAsync('DELETE FROM transaction_splits WHERE transaction_id = ?;', ['demo-tx-2']);
       await db.runAsync(
-        'INSERT INTO transaction_splits (id, transactionId, accountId, amount) VALUES (?, ?, ?, ?);',
-        ['demo-split-2', 'demo-tx-2', accCheckingId, 84500]
+        'INSERT INTO transaction_splits (id, transaction_id, account_id, category_id, amount) VALUES (?, ?, ?, ?, ?);',
+        ['demo-split-2', 'demo-tx-2', accCheckingId, 'cat_exp_food', 84500]
       );
 
       await loadData();
