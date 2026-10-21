@@ -18,6 +18,7 @@ import {
 import { Account } from '@/core/models/account';
 import { Transaction } from '@/core/models/transaction';
 import { AccountDetailHero } from '@/components/accounts/AccountDetailHero';
+import { AccountProjectionCard } from '@/components/accounts/AccountProjectionCard';
 import { AccountTransactionsList } from '@/components/accounts/AccountTransactionsList';
 
 const accountRepo = new SqliteAccountRepository();
@@ -146,6 +147,8 @@ export default function AccountDetailScreen() {
       >
         {/* Hero & Métricas */}
         <AccountDetailHero account={account} totalIn={totalIn} totalOut={totalOut} />
+
+        <AccountProjectionCard account={account} />
 
         {/* Historial de Movimientos */}
         <AccountTransactionsList transactions={transactions} />

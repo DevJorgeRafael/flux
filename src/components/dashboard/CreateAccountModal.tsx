@@ -16,6 +16,11 @@ import Animated, { LinearTransition, FadeIn, Easing } from 'react-native-reanima
 import { AccountType } from '@/core/models/account';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteAccountRepository } from '@/infrastructure/repositories';
+import {
+  calculateDailyProjection,
+  calculateFixedTermMaturity,
+} from '@/core/services/interest-calculator';
+import { AccountProjectionPreview } from '@/components/dashboard/AccountProjectionPreview';
 
 interface CreateAccountModalProps {
   visible: boolean;
@@ -97,7 +102,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
         accType === 'FIXED_TERM'
           ? {
               principalAmount: parsedBalance,
-              annualRate: parsedTNA || 0.4,
+              annualRate: parsedTNA ?? 0.4,
               termMonths: parsedMonths,
             }
           : undefined;
@@ -120,6 +125,26 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       setIsCreatingAccount(false);
     }
   };
+
+  const previewCapital = Math.max(0, parseFloat(accBalance) || 0);
+  const enteredPreviewRate = parseFloat(accTNA);
+  const previewRate = Math.max(
+    0,
+    Number.isFinite(enteredPreviewRate)
+      ? enteredPreviewRate
+      : accType === 'FIXED_TERM'
+        ? 40
+        : 0
+  );
+  const previewMonths = Math.max(1, parseInt(accTermMonths, 10) || 3);
+  const previewFixedMaturity =
+    accType === 'FIXED_TERM'
+      ? calculateFixedTermMaturity(previewCapital, previewRate, previewMonths)
+      : null;
+  const previewFlexibleMaturity =
+    accType === 'FLEXIBLE_SAVINGS'
+      ? calculateDailyProjection(previewCapital, previewRate, 365).at(-1)?.balance ?? previewCapital
+      : null;
 
   if (!isRendered) return null;
 
@@ -302,6 +327,14 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
                   ))}
                 </View>
               </Animated.View>
+            )}
+
+            {(accType === 'FIXED_TERM' || accType === 'FLEXIBLE_SAVINGS') && (
+              <AccountProjectionPreview
+                accountType={accType}
+                rate={previewRate}
+                finalAmount={previewFixedMaturity ?? previewFlexibleMaturity ?? previewCapital}
+              />
             )}
 
             {/* Botón Crear Cuenta */}
