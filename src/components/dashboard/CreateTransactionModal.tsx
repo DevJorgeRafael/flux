@@ -27,6 +27,7 @@ interface CreateTransactionModalProps {
   categories: Category[];
   onClose: () => void;
   onTransactionCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const transactionRepo = new SqliteTransactionRepository();
@@ -38,6 +39,7 @@ export function CreateTransactionModal({
   categories,
   onClose,
   onTransactionCreated,
+  blurTarget,
 }: CreateTransactionModalProps) {
   const colors = useColors();
   const insets = useInsets();
@@ -156,7 +158,7 @@ export function CreateTransactionModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} />
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — slide up/down sin layout animation */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">

@@ -142,6 +142,7 @@ export default function DashboardScreen() {
         initialType={txType}
         accounts={accounts}
         categories={categories}
+        blurTarget={blurTarget}
         onClose={() => setIsTxModalVisible(false)}
         onTransactionCreated={handleDataChanged}
       />
@@ -149,6 +150,7 @@ export default function DashboardScreen() {
       {/* Modal Crear Cuenta */}
       <CreateAccountModal
         visible={isAccountModalVisible}
+        blurTarget={blurTarget}
         onClose={() => setIsAccountModalVisible(false)}
         onAccountCreated={handleDataChanged}
       />

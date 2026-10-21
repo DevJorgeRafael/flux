@@ -28,11 +28,17 @@ interface CreateAccountModalProps {
   visible: boolean;
   onClose: () => void;
   onAccountCreated: () => void;
+  blurTarget: React.RefObject<View | null>;
 }
 
 const accountRepo = new SqliteAccountRepository();
 
-export function CreateAccountModal({ visible, onClose, onAccountCreated }: CreateAccountModalProps) {
+export function CreateAccountModal({
+  visible,
+  onClose,
+  onAccountCreated,
+  blurTarget,
+}: CreateAccountModalProps) {
   const colors = useColors();
   const insets = useInsets();
   const { t } = useTranslation();
@@ -158,7 +164,7 @@ export function CreateAccountModal({ visible, onClose, onAccountCreated }: Creat
       animationType="none"
       onRequestClose={handleClose}
     >
-      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} />
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} blurTarget={blurTarget} />
 
       {/* Sheet — solo slide up/down, sin layout animation ni Reanimated */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
