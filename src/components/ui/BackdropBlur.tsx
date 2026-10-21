@@ -12,6 +12,7 @@ interface BackdropBlurProps {
 
 export function BackdropBlur({ visible, onPress, blurTarget }: BackdropBlurProps) {
   const { isDark } = useThemeMode();
+  const canBlur = Boolean(blurTarget);
 
   return (
     <MotiView
@@ -19,23 +20,31 @@ export function BackdropBlur({ visible, onPress, blurTarget }: BackdropBlurProps
       transition={{ type: 'timing', duration: 250 }}
       style={[
         styles.container,
-        { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.24)' : 'rgba(255, 255, 255, 0.12)' },
+        {
+          backgroundColor: canBlur
+            ? 'transparent'
+            : isDark
+              ? 'rgba(0, 0, 0, 0.7)'
+              : 'rgba(0, 0, 0, 0.24)',
+        },
       ]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
-      <BlurView
-        intensity={40}
-        tint={isDark ? 'dark' : 'light'}
-        {...(blurTarget
-          ? { blurMethod: 'dimezisBlurViewSdk31Plus' as const, blurTarget }
-          : {})}
-        style={StyleSheet.absoluteFill}
-      />
-      {isDark && (
-        <View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFill, styles.darkOverlay]}
-        />
+      {canBlur && (
+        <>
+          <BlurView
+            key={isDark ? 'blur-dark' : 'blur-light'}
+            intensity={30}
+            tint="light"
+            blurMethod="dimezisBlurViewSdk31Plus"
+            blurTarget={blurTarget}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, isDark ? styles.darkBlurOverlay : styles.lightBlurOverlay]}
+          />
+        </>
       )}
       <Pressable style={StyleSheet.absoluteFill} onPress={onPress} />
     </MotiView>
@@ -47,7 +56,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     zIndex: 0,
   },
-  darkOverlay: {
-    backgroundColor: 'rgba(9, 9, 11, 0.58)',
+  darkBlurOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+  },
+  lightBlurOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });
