@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { ActivityIndicator, View, LogBox } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StatusBar } from 'expo-status-bar';
 import { UIProvider, useThemeMode } from '@/components/ui/theme';
 import { initDatabase } from '@/infrastructure/database/db';
 import { TranslationProvider } from '@/core/i18n/useTranslation';
-
-LogBox.ignoreLogs(['SafeAreaView has been deprecated and will be removed in a future release']);
 
 function RootNavigator() {
   const insets = useSafeAreaInsets();
