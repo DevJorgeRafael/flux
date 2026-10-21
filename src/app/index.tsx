@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -19,10 +19,13 @@ import { RecentTransactionsList } from '@/components/dashboard/RecentTransaction
 import { CreateAccountModal } from '@/components/dashboard/CreateAccountModal';
 import { CreateTransactionModal } from '@/components/dashboard/CreateTransactionModal';
 import { useTranslation } from '@/core/i18n/useTranslation';
+import { BlurTargetView } from 'expo-blur';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useInsets();
+  const blurTarget = useRef<View>(null);
 
   // Custom Hooks
   const {
@@ -81,27 +84,14 @@ export default function DashboardScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      {/* Top Header con menú de Configuración / Engranaje */}
-      <DashboardHeader
-        isSettingsOpen={isSettingsOpen}
-        isDevMode={isDevMode}
-        isDark={isDark}
-        language={language}
-        toggleSettings={toggleSettings}
-        closeSettings={closeSettings}
-        toggleTheme={toggleTheme}
-        toggleLanguage={toggleLanguage}
-        handleSeedDemoData={handleSeedDemoData}
-        handleResetAllData={handleResetAllData}
-      />
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-        }
-      >
+      <BlurTargetView ref={blurTarget} style={styles.blurTarget}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
+        >
         {/* Balance Consolidado y Métricas */}
         <DashboardHero totalBalance={totalBalance} monthlyTotals={monthlyTotals} />
 
@@ -124,7 +114,27 @@ export default function DashboardScreen() {
           selectedAccountName={selectedAccountName}
           defaultAccountId={accounts[0]?.id}
         />
-      </ScrollView>
+        </ScrollView>
+      </BlurTargetView>
+
+      {isSettingsOpen && (
+        <BackdropBlur visible={isSettingsOpen} onPress={closeSettings} blurTarget={blurTarget} />
+      )}
+
+      <View style={styles.headerOverlay} pointerEvents="box-none">
+        <DashboardHeader
+          isSettingsOpen={isSettingsOpen}
+          isDevMode={isDevMode}
+          isDark={isDark}
+          language={language}
+          toggleSettings={toggleSettings}
+          closeSettings={closeSettings}
+          toggleTheme={toggleTheme}
+          toggleLanguage={toggleLanguage}
+          handleSeedDemoData={handleSeedDemoData}
+          handleResetAllData={handleResetAllData}
+        />
+      </View>
 
       {/* Modal Registrar Movimiento */}
       <CreateTransactionModal
@@ -158,5 +168,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 8,
+  },
+  blurTarget: {
+    flex: 1,
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 100,
+    elevation: 100,
   },
 });

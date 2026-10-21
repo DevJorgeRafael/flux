@@ -18,6 +18,7 @@ import { Category } from '@/core/models/category';
 import { useColors, useInsets } from '@/components/ui/theme';
 import { SqliteTransactionRepository } from '@/infrastructure/repositories';
 import { useTranslation } from '@/core/i18n/useTranslation';
+import { BackdropBlur } from '@/components/ui/BackdropBlur';
 
 interface CreateTransactionModalProps {
   visible: boolean;
@@ -155,19 +156,7 @@ export function CreateTransactionModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      {/* Backdrop con fade timing */}
-      <MotiView
-        animate={{ opacity: isAnimatingIn ? 1 : 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
-        pointerEvents={isAnimatingIn ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-      </MotiView>
+      <BackdropBlur visible={isAnimatingIn} onPress={handleClose} />
 
       {/* Sheet — slide up/down sin layout animation */}
       <View style={styles.modalBackdrop} pointerEvents="box-none">
@@ -358,12 +347,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
+    zIndex: 1,
+    elevation: 1,
   },
   modalSheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
+    zIndex: 1,
+    elevation: 1,
   },
   modalTopBar: {
     flexDirection: 'row',
